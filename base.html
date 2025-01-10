@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+  <div class="dashboard-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>Ken Adams</h2>
+      </div>
+      <nav class="sidebar-menu">
+        <a href="#" class="menu-item active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="#" class="menu-item"><i class="fas fa-volume-up"></i> Noise Pollution</a>
+        <a href="#" class="menu-item"><i class="fas fa-wind"></i> Air Pollution</a>
+        <a href="#" class="menu-item"><i class="fas fa-tint"></i> Humidity Pollution</a>
+        <h3>Account Pages</h3>
+        <a href="#" class="menu-item"><i class="fas fa-cog"></i> Settings</a>
+        <a href="#" class="menu-item"><i class="fas fa-sign-out-alt"></i> Log Out</a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="#">Need Support? <br> Reach to our team</a>
+        <a href="#">Documentation</a>
+        <p>Any Feedback is welcomed...</p>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="header">
+        <div class="location headerbox">Current Location: Kolikode</div>
+        <div class="status headerbox">Air Quality: <span class="good">Good</span></div>
+        <div class="status headerbox">Noise Quality: <span class="bad">Bad</span></div>
+        <div class="status headerbox">Humidity Quality: <span class="moderate">Moderate</span></div>
+      </header>
+      <section class="hero-section">
+        <!-- content here -->
+      </section>
+    </main>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="scripts.js"></script>
+</body>
+</html>

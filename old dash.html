@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pollution Monitoring Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 3fr;
+            grid-gap: 20px;
+            padding: 20px;
+        }
+
+        .sidebar {
+            background-color: #1c1c1c;
+            color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .sidebar h2 {
+            margin-bottom: 20px;
+        }
+
+        .sidebar ul {
+            list-style: none;
+        }
+
+        .sidebar ul li {
+            margin-bottom: 10px;
+        }
+
+        .sidebar ul li a {
+            color: #fff;
+            text-decoration: none;
+            font-size: 1rem;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-rows: auto 1fr;
+            grid-gap: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .header .status {
+            display: flex;
+            gap: 15px;
+        }
+
+        .status div {
+            background-color: #f1f1f1;
+            padding: 10px 15px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-gap: 20px;
+        }
+
+        .card {
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart, .banner {
+            grid-column: span 2;
+        }
+
+        .banner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #0044cc;
+            color: #fff;
+            font-size: 1.5rem;
+            text-align: center;
+        }
+
+        .feedback {
+            margin-top: 20px;
+            text-align: center;
+            color: #777;
+        }
+
+        .feedback a {
+            color: #0044cc;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <h2>Ken Adams</h2>
+            <ul>
+                <li><a href="#">Dashboard</a></li>
+                <li><a href="#">Noise Pollution</a></li>
+                <li><a href="#">Air Pollution</a></li>
+                <li><a href="#">Humidity Pollution</a></li>
+                <li><a href="#">Settings</a></li>
+                <li><a href="#">Log Out</a></li>
+            </ul>
+            <div class="support">
+                <p>Need Support?</p>
+                <a href="#">Reach our team</a><br>
+                <a href="#">Documentation</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="header">
+                <h1>Dashboard</h1>
+                <div class="status">
+                    <div>Air Quality<br><strong>Good</strong></div>
+                    <div>Noise Quality<br><strong>Bad</strong></div>
+                    <div>Humidity Quality<br><strong>Moderate</strong></div>
+                </div>
+            </div>
+
+            <div class="banner">
+                For a Smarter, Cleaner Future.
+            </div>
+
+            <div class="content">
+                <div class="card">
+                    <h2>Trend in past week</h2>
+                    <canvas id="trendChart"></canvas>
+                </div>
+                <div class="card">
+                    <h2>Standard Limit vs Current Pollution</h2>
+                    <canvas id="pollutionChart"></canvas>
+                </div>
+                <div class="card">
+                    <h2>Prediction for tomorrow</h2>
+                    <p>This may not be 100% accurate.</p>
+                </div>
+            </div>
+
+            <div class="feedback">
+                Any feedback is welcomed. <a href="#">Submit feedback</a>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // JavaScript code for charts can be added here using libraries like Chart.js
+        // Example of initializing Chart.js charts
+        document.addEventListener('DOMContentLoaded', () => {
+            const trendCtx = document.getElementById('trendChart').getContext('2d');
+            const pollutionCtx = document.getElementById('pollutionChart').getContext('2d');
+
+            new Chart(trendCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Pollution Level',
+                        data: [200, 150, 300, 400, 350, 500, 450],
+                        backgroundColor: '#0044cc',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                }
+            });
+
+            new Chart(pollutionCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    datasets: [{
+                        label: 'Pollution Levels',
+                        data: [300, 250, 400, 350, 500, 450, 400, 300, 200, 150, 100, 50],
+                        borderColor: '#0044cc',
+                        fill: true,
+                        backgroundColor: 'rgba(0, 68, 204, 0.2)',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                }
+            });
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</body>
+</html>
