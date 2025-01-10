@@ -77,17 +77,27 @@
   }
   
   /* Main Content */
-  .main-content {
-    padding: 20px;
+  main.main-content {
+    background: url("wallpaper.jpg") no-repeat fixed center;
+  }
+
+  div.main-content {
+    z-index: +5;
+    background: rgba(255, 255, 255, 0.508);
     display: flex;
     flex-direction: column;
   }
   
+
+  
   .header {
+    position: absolute;
     display: flex;
+    width:calc(100vw - 250px);
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
+    padding: 20px 50px;
   }
   .headerbox{
     text-align: center;
@@ -200,7 +210,15 @@
 
   /*   Map css     */
   iframe.map {
-    width: 100%;
-    height: 100%;
+    height: 100vh;
     border: none;
+  }
+  /* ------glass morphism------ */
+  .glass{
+ 
+  background: rgba(255, 255, 255, 0.342);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  border: #fff 1px solid;
+  color:white ;
   }
