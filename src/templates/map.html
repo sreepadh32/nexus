@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="./static/styles.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
@@ -15,12 +15,18 @@
         <h2>Ken Adams</h2>
       </div>
       <nav class="sidebar-menu">
-        <a href="#" class="menu-item active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-        <a href="#" class="menu-item"><i class="fas fa-volume-up"></i> Noise Pollution</a>
-        <a href="#" class="menu-item"><i class="fas fa-wind"></i> Air Pollution</a>
-        <a href="#" class="menu-item"><i class="fas fa-tint"></i> Humidity Pollution</a>
+        <a href="dash.html" class="menu-item active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="map.html" class="menu-item"><i class="fas fa-volume-up"></i> Noise Pollution</a>
+        <a href="map.html" class="menu-item"><i class="fas fa-wind"></i> Air Pollution</a>
+        <a href="map.html" class="menu-item"><i class="fas fa-tint"></i> Humidity Pollution</a>
         <h3>Account Pages</h3>
-        <a href="#" class="menu-item"><i class="fas fa-cog"></i> Settings</a>
+        <a href="#" class="menu-item" id="settingsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" ><i class="fas fa-cog"></i> Settings</a>
+        <!-- Settings dropdown menu -->
+
+    <div class="dropdown-menu " aria-labelledby="settingsDropdown">
+      <a class="dropdown-item menu-item" href="change-username.html">Change Username</a>
+      <a class="dropdown-item menu-item" href="change-password.html">Change Password</a>
+    </div>
         <a href="#" class="menu-item"><i class="fas fa-sign-out-alt"></i> Log Out</a>
       </nav>
       <div class="sidebar-footer">
@@ -32,15 +38,19 @@
 
     <!-- Main Content -->
     <main class="main-content">
+    <div class="main-content">
       <header class="header">
         <div class="location headerbox">Current Location: Kolikode</div>
         <div class="status headerbox">Air Quality: <span class="good">Good</span></div>
         <div class="status headerbox">Noise Quality: <span class="bad">Bad</span></div>
         <div class="status headerbox">Humidity Quality: <span class="moderate">Moderate</span></div>
       </header>
-      <section class="hero-section">
-        <!-- content here -->
+      <section class="content">
+        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3899.0740641127736!2d75.23187347506426!3d12.243264388009182!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ba465c310dea69b%3A0xe1985dae01d5292!2sCoE%20Trikaripur!5e0!3m2!1sen!2sin!4v1735896309092!5m2!1sen!2sin" width="100%" height="600" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+    
+
       </section>
+    </div>
     </main>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

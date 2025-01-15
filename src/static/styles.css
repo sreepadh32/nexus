@@ -78,7 +78,7 @@
   
   /* Main Content */
   main.main-content {
-    background: url("wallpaper.jpg") no-repeat fixed center;
+    background: url("../static/wallpaper.jpg") no-repeat fixed center;
   }
 
   div.main-content {
