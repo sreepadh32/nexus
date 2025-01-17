@@ -11,8 +11,8 @@ cmd = con.cursor()
 @task.route('/')
 def login():
     return render_template('login.html')
-@task.route('/logincheck', methods=['post'])
 
+@task.route('/logincheck', methods=['post'])
 def logincheck():
     user = request.form['email']
     psd = request.form['password']
@@ -24,6 +24,29 @@ def logincheck():
     elif usertype=="admin":
          session['logid']=result[0]
          return render_template('dash.html')
+@app.route("/admin")
+def Admin():
+    return render_template("adminsettings.html")
 
+@app.route("/addUser", methods=["POST"])
+def add_user():
+    username = request.form["username"]
+    email = request.form["email"]
+    password = request.form["password"]
+    usertype = request.form["role"]
+
+    # Insert the user into the database
+    cmd.execute("INSERT INTO logintable (username, email, password, usertype) VALUES (%s, %s, %s, %s)", (username, email, password, usertype))
+    con.commit()
+    return "User added successfully!"
+@app.route("/deleteUser", methods=["POST"])
+def delete_user():
+    username = request.form["username"]
+
+    # Delete the user from the database
+    cmd.execute("DELETE FROM logintable WHERE username = %s", (username))
+    con.commit()
+
+    return "User deleted successfully!"
 
 task.run(debug=True)
