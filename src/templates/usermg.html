@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>User Management</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+        }
+
+        .form-container {
+            width: 90%;
+            max-width: 400px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .form-container input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1em;
+            box-sizing: border-box;
+        }
+
+        .form-container input:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+        }
+
+       
+        .form-container button {
+            width: 100%;
+            font-size: 1.2em;
+            padding: 10px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            color: #fff;
+            background: linear-gradient(90deg, #4CAF50, #2A9D8F);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .form-container button:hover {
+            background: linear-gradient(90deg, #2A9D8F, #4CAF50);
+            transform: translateY(-2px);
+        }
+
+        .form-container button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .section-header {
+            margin-top: 20px;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <h1>User Management</h1>
+
+    <form action="/add_user" method="POST" class="form-container">
+        <div class="section-header">Add User</div>
+        <input type="text" name="username" id="ip1" placeholder="Enter Username" required />
+        <input type="email" name="email" id="ip2" placeholder="Enter Email" required />
+        <input type="password" name="password" id="ip3" placeholder="Enter Password" required />
+        <button type="submit">Add User</button>
+    </form>
+
+    <form action="/delete_user" method="POST" class="form-container">
+        <div class="section-header">Delete User</div>
+        <input type="text" name="userid" id="ip4" placeholder="Enter User ID" required />
+        <button type="submit">Delete User</button>
+    </form>
+</body>
+</html>

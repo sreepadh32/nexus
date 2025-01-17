@@ -79,6 +79,7 @@
   /* Main Content */
   main.main-content {
     background: url("../static/wallpaper.jpg") no-repeat fixed center;
+    width: calc(100vw - 250px);
   }
 
   div.main-content {
@@ -88,6 +89,9 @@
     flex-direction: column;
   }
   
+  section.charts {
+    padding: 0 20px;
+  }
 
   
   .header {
