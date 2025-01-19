@@ -36,6 +36,19 @@ def dashboard():
 def showHeatmap():
     return render_template('map.html')
 
+#----------- Heatmap ----------
+@task.route('/heatmap')
+def heatmap():
+
+    data_points = [
+       {'lon': 75.231870, 'lat': 12.240140, 'weight': 0.8},
+       {'lon': 75.233870, 'lat': 12.242140, 'weight': 0.6},
+       {'lon': 75.229870, 'lat': 12.238140, 'weight': 0.9},
+       {'lon': 75.235870, 'lat': 12.241140, 'weight': 0.7}
+        ]
+
+    return render_template('heatmap.html', data_points=data_points)
+
 # -------- Settings -----
 @task.route('/changeusername')
 def changeusername():
@@ -71,6 +84,7 @@ def alertmg():
 def notifmg():
     return render_template("notifmg.html")
 
+
 @task.route("/addUser", methods=["POST"])
 def add_user():
     username = request.form["username"]
@@ -92,8 +106,6 @@ def delete_user():
     con.commit()
 
     return "User deleted successfully!"
-
-
 
 
 
