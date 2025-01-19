@@ -13,7 +13,6 @@ con = pymysql.connect(
 )
 cmd = con.cursor()
 
-
 @app.route('/test', methods=['POST'])
 def test():
     global dat
@@ -21,21 +20,17 @@ def test():
     res = val.split(',')
     temperature = res[0]
     humidity = res[1]
-    gas=res[2]
-    noise=res[3]
-    lat=res[4]
-    long=res[5]
-    print("temperature", temperature)
-    print("humidity", humidity)
-    print("gas", gas)
-    print("noise", noise)
-    print("lat", lat)
-    print("long", long)
+    gas = res[2]
+    noise = res[3]
 
+    print("temperature:", temperature)
+    print("humidity:", humidity)
+    print("gas:", gas)
+    print("noise:", noise)
 
-    # Pass values as a tuple for the placeholders
-    query = "INSERT INTO readings (null, temp, hum, gas,noise,lat,long,curdate(),curtime()) VALUES (null, %s, %s, %s,%s,%s,%s)"
-    cmd.execute(query, (temperature, humidity, gas,noise,lat,long))
+    # Insert data into the database
+    query = "INSERT INTO readings (temp, hum, gas, noise, date, time) VALUES (%s, %s, %s, %s, CURDATE(), CURTIME())"
+    cmd.execute(query, (temperature, humidity, gas, noise))
     con.commit()
 
     result = "ok"
@@ -44,5 +39,5 @@ def test():
         dat = ""
     return result
 
-
-app.run(port=5000, host='0.0.0.0')
+if __name__ == "__main__":
+    app.run(port=5000, host='0.0.0.0')
