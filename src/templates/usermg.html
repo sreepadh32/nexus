@@ -86,7 +86,34 @@
 <body>
     <h1>User Management</h1>
 
-    <form action="/add_user" method="POST" class="form-container">
+    <!-- --------------user table ------------------>
+
+    <div class="glassmorphism-container" style="margin: 0 0 75px;">
+        <h3> Delete Users</h3
+            >
+        <table style="width: 800px;" border="2px" >
+            <tr>
+              <th>Sl No</th>
+              <th>Name</th>
+              <th>Usertype</th>
+              <th>Email</th>
+              <th>Delete</th>
+            </tr>
+            {% set slno = namespace(value=1) %}
+            {% for user in users%}
+            <tr>
+              <td>user {{ slno.value }}</td>
+              <td>{{ user[1] }}</td>
+              <td>{{ user[3] }}</td>
+              <td>{{ user[4] }}</td>
+              <td><a style="color: red;" href="/deluser/{{ user[0] }}">Delete User</a></td>
+            </tr>
+            {% set slno.value = slno.value + 1 %}
+            {% endfor %}
+        </table>
+    </div>
+
+    <form action="/addUser" method="POST" class="form-container">
         <div class="section-header">Add User</div>
         <input type="text" name="username" id="ip1" placeholder="Enter Username" required />
         <input type="email" name="email" id="ip2" placeholder="Enter Email" required />
@@ -101,10 +128,10 @@
         <button type="submit">Add User</button>
     </form>
 
-    <form action="/delete_user" method="POST" class="form-container">
-        <div class="section-header">Delete User</div>
-        <input type="text" name="username" id="ip4" placeholder="Enter Username" required />
-        <button type="submit">Delete User</button>
-    </form>
 </body>
+<script>
+    {% if request.args.get("message") %}
+  alert("{{ request.args.get("message") }}");
+{% endif %}
+</script>
 </html>

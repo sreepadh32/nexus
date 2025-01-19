@@ -10,7 +10,14 @@ cmd = con.cursor()
 @task.route('/')
 def login():
     return render_template('login.html')
-# ------------- LOgin And Signup -------------
+
+@task.route('/logout')
+def logout():
+    session.clear()
+    return redirect('/')
+
+
+# ------------------------------------------------ LOgin And Signup ---------------------------------------------
 @task.route('/logincheck', methods=['post'])
 def logincheck():
     user = request.form['email']
@@ -18,12 +25,11 @@ def logincheck():
     cmd.execute("select * from logintable where username='" + user + "' and password='" +psd+ "'")
     result = cmd.fetchone()
     if result is not None:
-        usertype = result[3]
-        if usertype == "admin":
-            session['logid'] = result[0]
-            return render_template('adminsettings.html')
-        else:
-            return redirect(url_for("login", error="Student Deletion Succesfull"))
+        session['logid'] = result[0]
+        session['usertype']=result[3]
+        session["username"]=result[1]
+        session["email"]=result[4]
+        return redirect('/dashboard')
     else:
         return '''<script>alert("INVALID USERNAME AND PASSWORD");window.location.replace("/");</script>'''
 
@@ -44,16 +50,29 @@ def signupcheck():
     cmd.execute("INSERT INTO logintable (username, email, password, usertype) VALUES (%s, %s, %s, %s)", (username, email, password, usertype))
     con.commit()
     return '''<script>alert("SIGNUP SUCCESSFUL");window.location.replace("/");</script>'''
-    
-# ---------- Map ----------------
+
+# ------------------------------------------------- Dashboard ------------------------------------------------------------
+@task.route("/dashboard")
+def dashboard():
+    return render_template("dashboard.html")
+
+# ---------------------------------------------------- Map ------------------------------------------------------------
 @task.route('/map')
 def showHeatmap():
     return render_template('map.html')
 
-# ------------ Admin -----------
-@task.route("/admin")
-def Admin():
-    return render_template("adminsettings.html")
+
+
+# -------------------------------------------------- Admin -----------------------------------------------------
+
+
+#----------------USer management-------------------
+@task.route("/usermanagement")
+def usermanagement():
+    cmd.execute("SELECT * FROM logintable")
+    users = cmd.fetchall()
+    return render_template("usermg.html", users=users)
+
 
 @task.route("/addUser", methods=["POST"])
 def add_user():
@@ -65,16 +84,35 @@ def add_user():
     # Insert the user into the database
     cmd.execute("INSERT INTO logintable (username, email, password, usertype) VALUES (%s, %s, %s, %s)", (username, email, password, usertype))
     con.commit()
-    return "User added successfully!"
+    return redirect(url_for("usermanagement", message="User added successfully!"))
 
-@task.route("/deleteUser", methods=["POST"])
-def delete_user():
-    username = request.form["username"]
 
-    # Delete the user from the database
-    cmd.execute("DELETE FROM logintable WHERE username = %s", (username))
-    con.commit()
+@task.route("/deluser/<uid>", methods=["GET"])
+def delete_user(uid):
+    try:
+        # Delete the user from the database
+        cmd.execute("DELETE FROM logintable WHERE id= %s;", (uid))
+        con.commit()
+        return redirect(url_for("usermanagement", message="User deleted successfully!"))
+    except Exception as e:
+        return redirect(url_for("usermanagement", message="Error deleting user: " + str(e)))
+    
+# ---------- Sensor Management ------------
+@task.route("/sensormanagement")
+def sensor_management():
+    cmd.execute("SELECT * FROM readings")
+    sensors = cmd.fetchall()
+    return render_template("sensormg.html", sensors=sensors)
 
-    return "User deleted successfully!"
+@task.route("/delete_sensor/<sid>", methods=["GET"])
+def delete_sensor(sid):
+    try:
+        cmd.execute("DELETE FROM sensor_table WHERE id= %s;", (sid))
+        con.commit()
+        return redirect(url_for("sensor_management", message="Sensor deleted successfully!"))
+    except Exception as e:
+        return redirect(url_for("sensor_management", message="Error deleting sensor: " + str(e)))
+    
+
 
 task.run(debug=True)

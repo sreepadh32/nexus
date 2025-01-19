@@ -1,10 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-    <head>
+
+{% extends "base.html" %}
+
+{% block head %}
         <title>Admin Dashboard</title> 
-        <h1>Admin Portal</h1>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
             /* General Styles */
         body {
@@ -16,15 +14,27 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            flex-direction: column;
         }
 
         h1 {
-            color: #333;
+            
+            color: #ffffff;
             text-align: center;
             margin-bottom: 20px;
             font-size: 2.5em;
         }
+
+        .adminbuttons {
+            border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 45%;
+  height: fit-content;
+  padding: 20px ;
+  margin: 200px auto; /* Add this line to center the div */
+}
 
         /* Button Container Styles */
         div {
@@ -55,26 +65,22 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
-        /* Responsive Styling */
-        @media (max-width: 600px) {
-            button {
-                font-size: 1em;
-                padding: 10px 20px;
-            }
-
-            h1 {
-                font-size: 2em;
-            }
-        }
 
         </style>
-    </head>
+{% endblock %}
+
+{% block username %} {{username}} {% endblock %}
+
+{% block mainsection %}
     <body>
+        
+        <div class="adminbuttons glass">
+            <h1>Admin Portal</h1>
         <div class="userm">
-            <button onclick="location.href='usermg.html'">User Management</button>
+            <button onclick="location.href='/usermanagement'">User Management</button>
         </div>
         <div class="sensm">
-            <button onclick="location.href='sensormg.html'">Sensors Management </button>
+            <button onclick="location.href='/sensormanagement'">Sensors Management </button>
         </div>
         <div class="alert">
             <button onclick="location.href='alertmg.html'">Alert Management</button>
@@ -82,5 +88,5 @@
         <div class="noti">
             <button onclick="location.href='notifmg.html'">Notification Management</button>
         </div>
-    </body>
-</html>
+        </div>
+{% endblock %}
