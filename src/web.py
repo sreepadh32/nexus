@@ -24,11 +24,28 @@ def logincheck():
     elif usertype=="admin":
          session['logid']=result[0]
          return render_template('adminsettings.html')
+
+
+# ------Dash -----
+@task.route('/dash')
+def dashboard():
+    return render_template('dash.html')
     
 # ---------- Map ----------------
 @task.route('/map')
 def showHeatmap():
     return render_template('map.html')
+
+# -------- Settings -----
+@task.route('/changeusername')
+def changeusername():
+    return render_template('change-username.html')
+
+@task.route('/changepassword')
+def changepassword():
+    return render_template('change-password.html')
+
+
 
 # ------------ Admin -----------
 @task.route("/admin")

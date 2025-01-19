@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}{% endblock %}</title>
-  <link rel="stylesheet" href="../static/styles.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
@@ -15,17 +15,17 @@
         <h2>Ken Adams</h2>
       </div>
       <nav class="sidebar-menu">
-        <a href="dash.html" class="menu-item active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-        <a href="/map" class="menu-item"><i class="fas fa-volume-up"></i> Noise Pollution</a>
-        <a href="/map" class="menu-item"><i class="fas fa-wind"></i> Air Pollution</a>
-        <a href="/map" class="menu-item"><i class="fas fa-tint"></i> Humidity Pollution</a>
+        <a href="{{ url_for('dashboard') }}" class="menu-item active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="{{ url_for('showHeatmap') }}" class="menu-item"><i class="fas fa-volume-up"></i> Noise Pollution</a>
+        <a href="{{ url_for('showHeatmap') }}" class="menu-item"><i class="fas fa-wind"></i> Air Pollution</a>
+        <a href="{{ url_for('showHeatmap') }}" class="menu-item"><i class="fas fa-tint"></i> Humidity Pollution</a>
         <h3>Account Pages</h3>
         <a href="#" class="menu-item" id="settingsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" ><i class="fas fa-cog"></i> Settings</a>
         <!-- Settings dropdown menu -->
 
     <div class="dropdown-menu " aria-labelledby="settingsDropdown">
-      <a class="dropdown-item menu-item" href="change-username.html">Change Username</a>
-      <a class="dropdown-item menu-item" href="change-password.html">Change Password</a>
+      <a class="dropdown-item menu-item" href="{{ url_for('changeusername') }}">Change Username</a>
+      <a class="dropdown-item menu-item" href="{{ url_for('changepassword') }}">Change Password</a>
     </div>
         <a href="#" class="menu-item"><i class="fas fa-sign-out-alt"></i> Log Out</a>
       </nav>
@@ -38,7 +38,7 @@
 
     <!-- Main Content -->
     <main class="main-content">
-      <header class="header" style="position: absolute;">
+      <header class="header" style="{{ url_for('static', filename='styles.css') }}">
         <div class="location headerbox glass">Current Location: Kolikode</div>
         <div class="status headerbox glass">Air Quality: <span class="good">Good</span></div>
         <div class="status headerbox glass">Noise Quality: <span class="bad">Bad</span></div>
@@ -49,6 +49,6 @@
   </div>
   <!-- js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="../static/scripts.js"></script>
+  <script src="{{ url_for('static', filename='scripts.js') }}"></script>
 </body>
 </html>
