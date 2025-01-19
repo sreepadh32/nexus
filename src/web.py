@@ -4,7 +4,7 @@ from werkzeug.utils import secure_filename
 
 task = Flask(__name__)
 task.secret_key = "abc"
-con =pymysql.connect(host="localhost", user="root", password="root", port=3306, db="smartcitydb",charset='utf8')
+con =pymysql.connect(host="localhost", user="root", password="root", port=3307, db="smartcitydb",charset='utf8')
 cmd = con.cursor()
 
 
@@ -35,6 +35,25 @@ def showHeatmap():
 def Admin():
     return render_template("adminsettings.html")
 
+
+@task.route('/showuser')
+def showuser():
+    return render_template('usermg.html')
+
+@task.route("/sensormg")
+def sensormg():
+    return render_template("sensormg.html")
+
+
+@task.route("/alertmg")
+def alertmg():
+    return render_template("alertmg.html")
+
+
+@task.route("/notifmg")
+def notifmg():
+    return render_template("notifmg.html")
+
 @task.route("/addUser", methods=["POST"])
 def add_user():
     username = request.form["username"]
@@ -56,5 +75,10 @@ def delete_user():
     con.commit()
 
     return "User deleted successfully!"
+
+
+
+
+
 
 task.run(debug=True)
