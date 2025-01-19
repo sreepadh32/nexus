@@ -8,14 +8,39 @@ document.addEventListener('DOMContentLoaded', () => {
       data: {
         labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
         datasets: [{
-          label: 'Trend',
+          label: 'Temperature',
           data: [200, 300, 400, 500, 450, 300, 200],
           backgroundColor: 'rgba(200, 57, 57, 0.2)',
+          borderColor: 'rgba(193, 66, 66, 0.9)',
+          borderWidth: 2
+        },
+        {
+          label: 'Humidity',
+          data: [200, 300, 400, 500, 450, 300, 200],
+          backgroundColor: 'rgba(57, 126, 200, 0.2)',
           borderColor: 'rgb(66, 181, 199)',
           borderWidth: 2
         }]
       },
-      options: { responsive: true }
+      options: {
+        responsive: true,
+        scales: {
+          x: {
+            ticks: {
+              color: '#000000', // Set the label color here
+            }
+          },
+          y: {
+            ticks: {
+              beginAtZero: true,
+              color: '#000000', // Set the label color here
+            }
+          }
+          
+          
+        }
+        
+      }
     });
   
     new Chart(ctx2, {
@@ -30,7 +55,9 @@ document.addEventListener('DOMContentLoaded', () => {
           borderWidth: 2
         }]
       },
-      options: { responsive: true }
+      options: { responsive: true 
+        
+      }
     });
   });
 

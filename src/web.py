@@ -54,7 +54,12 @@ def signupcheck():
 # ------------------------------------------------- Dashboard ------------------------------------------------------------
 @task.route("/dashboard")
 def dashboard():
-    return render_template("dashboard.html")
+    if session.get("logid") is not None:
+        cmd.execute("SELECT AVG(temp) as avg_temp,AVG(hum) as avg_hum,CAST(date AS DATE) as date1 FROM readings GROUP BY CAST(date AS DATE)")
+        data = cmd.fetchall()
+        return render_template("dashboard.html",trenddata=data)
+    else :
+        return redirect("/")
 
 # ---------------------------------------------------- Map ------------------------------------------------------------
 @task.route('/map')
@@ -64,7 +69,9 @@ def showHeatmap():
 
 
 # -------------------------------------------------- Admin -----------------------------------------------------
-
+@task.route("/admin-settings")
+def admin_settings():
+    return render_template("adminsettings.html")
 
 #----------------USer management-------------------
 @task.route("/usermanagement")
