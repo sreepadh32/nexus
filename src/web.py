@@ -4,14 +4,14 @@ from werkzeug.utils import secure_filename
 
 task = Flask(__name__)
 task.secret_key = "abc"
-con =pymysql.connect(host="localhost", user="root", password="root", port=3307, db="smartcitydb",charset='utf8')
+con =pymysql.connect(host="localhost", user="root", password="root", port=3306, db="smartcitydb",charset='utf8')
 cmd = con.cursor()
 
 
 @task.route('/')
 def login():
     return render_template('login.html')
-
+# ------------- LOgin And Signup
 @task.route('/logincheck', methods=['post'])
 def logincheck():
     user = request.form['email']
@@ -23,12 +23,19 @@ def logincheck():
         return '''<script>alert("INVALID USERNAME AND PASSWORD");windows.locations='/'</script>'''
     elif usertype=="admin":
          session['logid']=result[0]
-         return render_template('dash.html')
-@app.route("/admin")
+         return render_template('adminsettings.html')
+    
+# ---------- Map ----------------
+@task.route('/map')
+def showHeatmap():
+    return render_template('map.html')
+
+# ------------ Admin -----------
+@task.route("/admin")
 def Admin():
     return render_template("adminsettings.html")
 
-@app.route("/addUser", methods=["POST"])
+@task.route("/addUser", methods=["POST"])
 def add_user():
     username = request.form["username"]
     email = request.form["email"]
@@ -39,7 +46,8 @@ def add_user():
     cmd.execute("INSERT INTO logintable (username, email, password, usertype) VALUES (%s, %s, %s, %s)", (username, email, password, usertype))
     con.commit()
     return "User added successfully!"
-@app.route("/deleteUser", methods=["POST"])
+
+@task.route("/deleteUser", methods=["POST"])
 def delete_user():
     username = request.form["username"]
 
