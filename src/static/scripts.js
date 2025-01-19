@@ -10,8 +10,8 @@ document.addEventListener('DOMContentLoaded', () => {
         datasets: [{
           label: 'Trend',
           data: [200, 300, 400, 500, 450, 300, 200],
-          backgroundColor: 'rgba(54, 162, 235, 0.2)',
-          borderColor: 'rgba(54, 162, 235, 1)',
+          backgroundColor: 'rgba(200, 57, 57, 0.2)',
+          borderColor: 'rgb(66, 181, 199)',
           borderWidth: 2
         }]
       },
