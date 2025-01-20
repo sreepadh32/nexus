@@ -60,6 +60,38 @@ def dashboard():
         return render_template("dashboard.html",trenddata=data)
     else :
         return redirect("/")
+    
+@task.route("/change-password", methods=["POST", "GET"])
+
+def change_password():
+    if request.method == "POST":
+        current_password = request.form["current-password"]
+        new_password = request.form["new-password"]
+        confirm_password = request.form["confirm-password"]
+
+        # Find the user
+        cmd.execute("SELECT password FROM logintable WHERE username=%s", (session["username"],))
+        user_password = cmd.fetchone()[0]
+
+        # Check if the current password is correct
+        if user_password != current_password:
+            return '''<script>alert("Invalid current password");window.location.replace("/change-password");</script>'''
+
+        # Check if the new password and confirmation match
+        if new_password != confirm_password:
+            return '''<script>alert("New password and confirmation do not match");window.location.replace("/change-password");</script>'''
+
+        # Update the user's password
+        cmd.execute("UPDATE logintable SET password=%s WHERE username=%s", (new_password, session["username"]))
+        con.commit()
+
+        # Return a success response
+        return '''<script>alert("Password changed successfully");window.location.replace("/dashboard");</script>'''
+
+    return render_template("change-password.html")
+
+
+
 
 # ---------------------------------------------------- Map ------------------------------------------------------------
 @task.route('/map')
