@@ -62,7 +62,6 @@ def dashboard():
         return redirect("/")
     
 @task.route("/change-password", methods=["POST", "GET"])
-
 def change_password():
     if request.method == "POST":
         current_password = request.form["current-password"]
@@ -89,6 +88,11 @@ def change_password():
         return '''<script>alert("Password changed successfully");window.location.replace("/dashboard");</script>'''
 
     return render_template("change-password.html")
+
+@task.route("/change-username")
+def change_username():
+    return render_template("change-username.html")
+
 
 
 
