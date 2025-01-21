@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block head %}
+  <title> Map </title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@6.15.0/ol.css" />
+  <script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
+{% endblock %}
+{% block mainsection %}
+        <h1 style="position: absolute; z-index: 10; margin: 80px 0 0 55px;">Heat Pollution Map</h1>
+        <section class="content">
+          <!-- OpenLayers Map -->
+          <div id="map" style="width:100%; height:900px; z-index: 0; margin-top: 0px;"></div>
+        </section>
+{% endblock %}
+
+{% block script %}
+  <script>
+   // Initialize OpenLayers map
+   const baseLayer = new ol.layer.Tile({
+      source: new ol.source.OSM(),
+    });
+
+    // Dummy data points for heat map (latitude, longitude, and weight)
+        const data_points = {{ data_points | tojson }};
+
+
+    // Convert data points to OpenLayers features
+    const features = data_points.map((point) => {
+      const feature = new ol.Feature({
+        geometry: new ol.geom.Point(ol.proj.fromLonLat([point.lon, point.lat])),
+      });
+      feature.set('weight', point.weight);
+      return feature;
+    });
+
+    // Heatmap source and layer
+    const heatmapSource = new ol.source.Vector({
+      features: features,
+    });
+
+    const heatmapLayer = new ol.layer.Heatmap({
+      source: heatmapSource,
+      blur: 20,   // Blurring effect radius
+      radius: 20, // Radius of the heatmap points
+      weight: (feature) => feature.get('weight'), // Use the weight property for intensity
+    });
+
+    // Create map with base layer and heatmap
+    const map = new ol.Map({
+      target: 'map',
+      layers: [baseLayer, heatmapLayer],
+      view: new ol.View({
+        center: ol.proj.fromLonLat([75.231870, 12.240140]),
+        zoom: 16, // Set the zoom level
+      }),
+    });
+
+    // Log to check if the heatmap is successfully initialized
+    console.log('Heatmap initialized with dummy data');
+
+  </script>
+{% endblock %}

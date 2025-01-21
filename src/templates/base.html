@@ -41,8 +41,11 @@
 
     <!-- Main Content -->
     <main class="main-content">
-      <header class="header" style="position: absolute;">
-        <div class="location headerbox glass">Current Location: Kolikode</div>
+      <header class="header" style="position: absolute; z-index: 10;">
+        <!-- buttion to fetch location data -->
+        <!-- <button id="get-location">Get Location</button> -->
+        <div class="location headerbox glass"><i class="fa fa-map-marker" aria-hidden="true"></i>
+          Cheemeni</div>
         <div class="status headerbox glass">Air Quality: <span class="good">Good</span></div>
         <div class="status headerbox glass">Noise Quality: <span class="bad">Bad</span></div>
         <div class="status headerbox glass">Humidity Quality: <span class="moderate">Moderate</span></div>
@@ -53,5 +56,7 @@
   <!-- js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="../static/scripts.js"></script>
+  <script src="../static/geolocation.js"></script>
+  {% block script %} {% endblock %}
 </body>
 </html>

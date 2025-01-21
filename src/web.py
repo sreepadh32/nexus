@@ -1,11 +1,13 @@
 import pymysql as pymysql
 from flask import *
 from werkzeug.utils import secure_filename
+import requests
 
 task = Flask(__name__)
 task.secret_key = "abc"
 con =pymysql.connect(host="localhost", user="root", password="root", port=3306, db="smartcitydb",charset='utf8')
 cmd = con.cursor()
+
 
 @task.route('/')
 def login():
@@ -15,6 +17,35 @@ def login():
 def logout():
     session.clear()
     return redirect('/')
+#------------------------------------------------- GEOLOCATION -------------------------------------------------
+@task.route('/location', methods=['POST'])
+def handle_location():
+    data = request.get_json()
+    latitude = data['latitude']
+    longitude = data['longitude']
+    print("Received latitude: %s" % latitude)
+    print("Received longitude: %s" % longitude)
+
+    # Use the latitude and longitude to get the location
+    mapapi = "678e6b7153e80080651781qpn13b068"  # Replace with your actual API key
+    url = f"https://geocode.maps.co/reverse?lat={latitude}&lon={longitude}"
+    
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # Raise an exception for HTTP errors
+        data = response.json()
+        
+        if "display_name" in data:
+            location_name = data["display_name"]
+            print("Received location name: %s" % location_name)
+            session["location"] = location_name
+            return jsonify({'message': 'Location received successfully', 'location': location_name})
+        else:
+            return jsonify({'error': 'Could not fetch location data'}), 500
+
+    except requests.RequestException as e:
+        print(f"Error fetching location: {e}")
+        return jsonify({'error': 'Failed to connect to the location service'}), 500
 
 
 # ------------------------------------------------ LOgin And Signup ---------------------------------------------
@@ -52,15 +83,15 @@ def signupcheck():
     return '''<script>alert("SIGNUP SUCCESSFUL");window.location.replace("/");</script>'''
 
 # ------------------------------------------------- Dashboard ------------------------------------------------------------
-@task.route("/dashboard")
+@task.route('/dashboard')
 def dashboard():
-    if session.get("logid") is not None:
-        cmd.execute("SELECT AVG(temp) as avg_temp,AVG(hum) as avg_hum,CAST(date AS DATE) as date1 FROM readings GROUP BY CAST(date AS DATE)")
-        data = cmd.fetchall()
-        return render_template("dashboard.html",trenddata=data)
-    else :
+    if session["logid"] is not None:
+
+        return render_template('dashboard.html')
+    else:
         return redirect("/")
-    
+
+
 @task.route("/change-password", methods=["POST", "GET"])
 def change_password():
     if request.method == "POST":
@@ -89,18 +120,47 @@ def change_password():
 
     return render_template("change-password.html")
 
-@task.route("/change-username")
+@task.route("/change-username", methods=["POST", "GET"])
 def change_username():
+    if request.method == "POST":
+        new_username = request.form["new-username"]
+
+        # Find the user
+        cmd.execute("SELECT username FROM logintable WHERE username=%s", (session["username"],))
+        user_username = cmd.fetchone()[0]
+
+        # Check if the new username is available
+        cmd.execute("SELECT username FROM logintable WHERE username=%s", (new_username,))
+        existing_username = cmd.fetchone()
+
+        if existing_username is not None:
+            return '''<script>alert("Username already exists");window.location.replace("/change-username");</script>'''
+
+        # Update the user's username
+        cmd.execute("UPDATE logintable SET username=%s WHERE username=%s", (new_username, session["username"]))
+        con.commit()
+
+        # Update the session username
+        session["username"] = new_username
+
+        # Return a success response
+        return '''<script>alert("Username changed successfully");window.location.replace("/dashboard");</script>'''
+
     return render_template("change-username.html")
-
-
 
 
 
 # ---------------------------------------------------- Map ------------------------------------------------------------
 @task.route('/map')
 def showHeatmap():
-    return render_template('map.html')
+    data_points = [
+       {'lon': 75.231870, 'lat': 12.240140, 'weight': 0.8},
+       {'lon': 75.233870, 'lat': 12.242140, 'weight': 0.6},
+       {'lon': 75.229870, 'lat': 12.238140, 'weight': 0.9},
+       {'lon': 75.235870, 'lat': 12.241140, 'weight': 0.7}
+        ]
+    return render_template('heatmap.html', data_points=data_points)
+
 
 
 
