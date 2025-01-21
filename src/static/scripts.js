@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // Example for using Chart.js to render charts
 document.addEventListener('DOMContentLoaded', () => {
     const ctx1 = document.getElementById('trendChart').getContext('2d');
@@ -33,9 +34,12 @@ document.addEventListener('DOMContentLoaded', () => {
       options: { responsive: true }
     });
   });
+=======
+>>>>>>> 6de2068 (geolocation api set)
 
     // Show/hide dropdown menu
 document.getElementById('settingsDropdown').addEventListener('click', function() {
     var dropdownMenu = document.querySelector('.dropdown-menu');
     dropdownMenu.style.display = (dropdownMenu.style.display === 'block') ? 'none' : 'block';
   });
+s

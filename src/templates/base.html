@@ -38,8 +38,16 @@
 
     <!-- Main Content -->
     <main class="main-content">
+<<<<<<< HEAD
       <header class="header" style="{{ url_for('static', filename='styles.css') }}">
         <div class="location headerbox glass">Current Location: Kolikode</div>
+=======
+      <header class="header" style="position: absolute; z-index: 10;">
+        <!-- buttion to fetch location data -->
+        <!-- <button id="get-location">Get Location</button> -->
+        <div class="location headerbox glass"><i class="fa fa-map-marker" aria-hidden="true"></i>
+          Cheemeni</div>
+>>>>>>> 6de2068 (geolocation api set)
         <div class="status headerbox glass">Air Quality: <span class="good">Good</span></div>
         <div class="status headerbox glass">Noise Quality: <span class="bad">Bad</span></div>
         <div class="status headerbox glass">Humidity Quality: <span class="moderate">Moderate</span></div>
@@ -49,6 +57,12 @@
   </div>
   <!-- js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<<<<<<< HEAD
   <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+=======
+  <script src="../static/scripts.js"></script>
+  <script src="../static/geolocation.js"></script>
+  {% block script %} {% endblock %}
+>>>>>>> 6de2068 (geolocation api set)
 </body>
 </html>
