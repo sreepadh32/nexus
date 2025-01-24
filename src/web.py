@@ -151,18 +151,72 @@ def change_username():
 
 
 # ---------------------------------------------------- Map ------------------------------------------------------------
-@task.route('/map')
-def showHeatmap():
-    data_points = [
-       {'lon': 75.231870, 'lat': 12.240140, 'weight': 0.8},
-       {'lon': 75.233870, 'lat': 12.242140, 'weight': 0.6},
-       {'lon': 75.229870, 'lat': 12.238140, 'weight': 0.9},
-       {'lon': 75.235870, 'lat': 12.241140, 'weight': 0.7}
-        ]
-    return render_template('heatmap.html', data_points=data_points)
+# @task.route('/map')
+# def showHeatmap():
+#     data_points = [
+#        {'lon': 75.231870, 'lat': 12.240140, 'weight': 0.8},
+#        {'lon': 75.233870, 'lat': 12.242140, 'weight': 0.6},
+#        {'lon': 75.229870, 'lat': 12.238140, 'weight': 0.9},
+#        {'lon': 75.235870, 'lat': 12.241140, 'weight': 0.7}
+#         ]
+#     return render_template('heatmap.html', data_points=data_points)
 
+@task.route('/map/heat')
+def chartheat():
+    cmd.execute("SELECT * FROM readings WHERE id = (SELECT MAX(id) FROM readings)")
+    result=cmd.fetchall()
+    print(result)
+    # Prepare data_points in the required format
+    data_points = []
+    for row in result:
+        # Assuming the database has latitude in row[1], longitude in row[2], and weight in row[4]
+        data_point = {
+            'lat': 12.2429,  # Replace with the correct column index for latitude
+            'lon': 75.2346,  # Replace with the correct column index for longitude
+            'weight': row[1]/40  #min max normalised for 0-40 degrees
+        }
+        data_points.append(data_point)
+        print(data_points)
+    # Pass data_points to the template
+    return render_template('heatmap.html', data_points=data_points,map="Effective Heat")
 
+@task.route('/map/noise')
+def chartnoise():
+    # cmd.execute("SELECT * FROM readings WHERE id = (SELECT MAX(id) FROM readings)")
+    # result=cmd.fetchall()
+    # print(result)
+    # # Prepare data_points in the required format
+    # data_points = []
+    # for row in result:
+    #     # Assuming the database has latitude in row[1], longitude in row[2], and weight in row[4]
+    #     data_point = {
+    #         'lat': 12.2429,  # Replace with the correct column index for latitude
+    #         'lon': 75.2346,  # Replace with the correct column index for longitude
+    #         'weight': row[1]/40  # Replace with the correct column index for weight
+    #     }
+    #     data_points.append(data_point)
+    #     print(data_points)
+    # # Pass data_points to the template
+    return render_template('heatmap.html', data_points=None,map="Noise Pollution")
 
+@task.route('/map/air')
+def chartair():
+    # cmd.execute("SELECT * FROM readings WHERE id = (SELECT MAX(id) FROM readings)")
+    # result=cmd.fetchall()
+    # print(result)
+    # # Prepare data_points in the required format
+    # data_points = []
+    # for row in result:
+    #     # Assuming the database has latitude in row[1], longitude in row[2], and weight in row[4]
+    #     data_point = {
+    #         'lat': 12.2429,  # Replace with the correct column index for latitude
+    #         'lon': 75.2346,  # Replace with the correct column index for longitude
+    #         'weight': row[1]/40  # Replace with the correct column index for weight
+    #     }
+    #     data_points.append(data_point)
+    #     print(data_points)
+    # # Pass data_points to the template
+    return render_template('heatmap.html', data_points=None,map="Air Pollution")
 
 # -------------------------------------------------- Admin -----------------------------------------------------
 @task.route("/admin-settings")
