@@ -4,7 +4,7 @@
   
     --white: #fff;
     --black: #000;
-    --gray: #ccc;
+    --gray: #4c4c4c;
     --salmon: #e8716d;
     --smoky-black: rgba(34, 34, 34, 0.85);
   
@@ -24,6 +24,9 @@
     font-family: var(--ff);
     font-size: var(--ff-body);
     line-height: 1em;
+    background-image: url(https://images.pexels.com/photos/1209978/pexels-photo-1209978.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1);
+    background-repeat: no-repeat;
+    background-size: cover;
   }
   
   button {
@@ -95,12 +98,32 @@
     align-items: center;
     width: 100%;
     height: 100vh;
-    background: #ccc;
+background-color: rgba(18, 18, 20, 0.51); 
+color: rgba(18, 18, 20, 0.51);
     background-size: cover;
   }
-  
+  .header{
+    margin: 45px 0 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    background-color: rgba(250, 250, 250, 0.419); 
+    background-size: cover;
+  }
+  .header h1{
+    color: #141414;
+    font-size: 4rem;
+  }
+  .header h2{
+    color: #000000;
+    font-size: 2rem;
+  }
+  /* Container for registered and unregistered users */
   .user_options-container {
     position: relative;
+    margin: 5% auto 0 ;
     width: 80%;
   }
   
@@ -150,7 +173,7 @@
   .user_registered-login:hover,
   .user_unregistered-signup:hover {
     color: var(--smoky-black);
-    background-color: var(--gray);
+    background-color: var(--white);
   }
   
   /* Login and signup forms */
@@ -235,7 +258,7 @@
   }
   
   .forms_buttons-action:hover {
-    background-color: darken(var(--salmon), 10%);
+    background-color: rgb(194, 53, 53);
   }
   
   .user_forms-signup,

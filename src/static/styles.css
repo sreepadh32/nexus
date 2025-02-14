@@ -117,15 +117,15 @@
     font-size: 14px;
   }
   
-  .status .good {
+  .status .Good {
     color: green;
   }
   
-  .status .bad {
+  .status .Bad {
     color: red;
   }
   
-  .status .moderate {
+  .status .Moderate {
     color: orange;
   }
   

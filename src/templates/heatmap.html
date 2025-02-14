@@ -3,6 +3,21 @@
 {% block head %}
   <title> Map </title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@6.15.0/ol.css" />
+  <style> .slider-container {
+    text-align: center;
+    background-color: #ffffff;
+    padding: 15px 20px;
+    border-radius: 10px;
+    box-shadow: 0px 3px 10px rgba(0, 0, 0, 0.1);
+    margin: 0 20px;
+  }
+
+  #date-slider {
+  width: 100%;
+  background-color: transparent;
+  outline: none;
+}
+  </style>
   <script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
 {% endblock %}
 {% block mainsection %}
@@ -10,6 +25,11 @@
         <section class="content">
           <!-- OpenLayers Map -->
           <div id="map" style="width:100%; height:900px; z-index: 0; margin-top: 0px;"></div>
+
+        <div class="slider-container glass " style="position: absolute; z-index: 10;bottom: 10px;">
+            <input id="date-slider" type="range" min="0" max="7" step="1" value="5">
+            <div id="selected-date">Selected Date: <span id="date-label"></span></div>
+        </div>
         </section>
 {% endblock %}
 
@@ -22,7 +42,6 @@
 
     // Dummy data points for heat map (latitude, longitude, and weight)
         const data_points = {{ data_points | tojson }};
-
 
     // Convert data points to OpenLayers features
     const features = data_points.map((point) => {
@@ -59,9 +78,68 @@
     console.log('Heatmap initialized with dummy data');
 
     setInterval(function() {
-  location.reload();
-}, 60000); // 60000 milliseconds = 1 minute
+      location.reload();
+    }, 60000); // 60000 milliseconds = 1 minute
+
+    // -------------------------Slider--------------------
+    const slider = document.getElementById('date-slider');
+    const dateLabel = document.getElementById('date-label');
+
+    // Generate date options: past 5 days and 2 days in the future
+    const today = new Date();
+    const dates = [];
+
+    for (let i = 5; i >= 1; i--) {
+        const pastDate = new Date(today);
+        pastDate.setDate(today.getDate() - i);
+        dates.push(pastDate);
+    }
+    dates.push(new Date(today)); // Today 
+
+    for (let i = 1; i <= 2; i++) {
+        const futureDate = new Date(today);
+        futureDate.setDate(today.getDate() + i);
+        dates.push(futureDate); // 1 and 2 days in the future
+    }
+
+    // Format date as YYYY-MM-DD
+    function formatDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${day}/${month}/${year}`;
+    }
+
+    // Update date label on slider input
+    function updateDateLabel() {
+        const selectedDate = dates[slider.value];
+        dateLabel.textContent = formatDate(selectedDate);
+    }
+
+    // Initialize date label
+    updateDateLabel();
+
+    // Add event listener to update label on slider change
+    slider.addEventListener('input', function() {
+        updateDateLabel();
+        const selectedDate = dates[slider.value];
+        const formattedDate = formatDate(selectedDate);
+        
+        // Send the selected date to the backend
+        fetch('/map/heat/date', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ date: formattedDate })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Success:', data);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+    });
   </script>
-
-
 {% endblock %}
