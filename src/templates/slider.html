@@ -16,26 +16,99 @@
             font-weight: bold;
             margin-top: 10px;
         }
+        
+        input[type='range'] {
+            -webkit-appearance: none;
+            appearance: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            padding: 0;
+            width: 35em;
+            height: 5.125em;
+            transform: translate(-50%, -50%);
+            opacity: 0.65;
+            background: radial-gradient(circle at 50% 50%, rgba(247, 247, 247, 0) 0.2em, #f3f3f3 0.25em, #f3f3f3 0.375em);
+            background-repeat: repeat-x;
+            background-position: 0 50%;
+            background-size: 1.25em 0.5em;
+            font-size: 1em;
+            cursor: pointer;
+        }
+
+        input[type='range']::-webkit-slider-runnable-track {
+            position: relative;
+            width: 35em;
+            height: 5em;
+            background: linear-gradient(#d7d7d7, #f4f4f4);
+            border: 0.5em solid transparent;
+            box-shadow: 0 1px #fff;
+        }
+
+        input[type='range']::-moz-range-track,
+        input[type='range']::-ms-track {
+            width: 35em;
+            height: 5em;
+            background: linear-gradient(#d7d7d7, #f4f4f4);
+            border: 0.5em solid transparent;
+            box-shadow: 0 1px #fff;
+            color: transparent;
+        }
+
+        input[type='range']::-moz-range-progress,
+        input[type='range']::-ms-fill-lower {
+            height: 5em;
+            background: radial-gradient(circle at 50% 50%, #a09e9f 0.4em, rgba(160, 158, 159, 0) 0.5em);
+            background-repeat: repeat-x;
+            background-size: 1.25em 0.5em;
+        }
+
+        input[type='range']::-webkit-slider-thumb,
+        input[type='range']::-moz-range-thumb,
+        input[type='range']::-ms-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            position: relative;
+            z-index: 2;
+            margin-top: -1.75em;
+            width: 3.5em;
+            height: 3.5em;
+            border-radius: 0.5em;
+            border: 1px solid rgba(98, 98, 98, 0.32);
+            background: linear-gradient(#fff, #f2f2f2);
+            padding: 0.25em;
+            box-shadow: 0 0.5em 0.25em -1px rgba(114, 114, 114, 0.32);
+            cursor: ew-resize;
+        }
+
+        input[type='range']:focus {
+            outline: none;
+            opacity: 0.99;
+        }
     </style>
+
 </head>
 <body>
     <h1>Date Slider Selector</h1>
     <p>Use the slider below to select a date:</p>
 
     <div class="slider-container">
-        <input id="date-slider" type="range" min="0" max="8" step="1" value="7">
+        <input id="date-slider" type="range" min="0" max="6" step="1" value="5" style="width: 100%;">
+
         <div id="selected-date">Selected Date: <span id="date-label"></span></div>
     </div>
 
     <script>
+
+        // -------------------------Slider--------------------
         const slider = document.getElementById('date-slider');
         const dateLabel = document.getElementById('date-label');
 
-        // Generate date options: past 7 days and 1 day in the future
+        // Generate date options: past 5 days and 2 days in the future
         const today = new Date();
         const dates = [];
 
-        for (let i = 7; i >= 1; i--) {
+        for (let i = 5; i >= 1; i--) {
             const pastDate = new Date(today);
             pastDate.setDate(today.getDate() - i);
             dates.push(pastDate);
@@ -43,16 +116,18 @@
 
         dates.push(new Date(today)); // Today
 
-        const futureDate = new Date(today);
-        futureDate.setDate(today.getDate() + 1);
-        dates.push(futureDate); // 1 day in the future
+        for (let i = 1; i <= 2; i++) {
+            const futureDate = new Date(today);
+            futureDate.setDate(today.getDate() + i);
+            dates.push(futureDate); // 1 and 2 days in the future
+        }
 
         // Format date as YYYY-MM-DD
         function formatDate(date) {
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const day = String(date.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
+            return `${day}/${month}/${year}`;
         }
 
         // Update date label on slider input
