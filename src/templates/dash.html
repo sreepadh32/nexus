@@ -1,15 +1,23 @@
 {% extends "base.html" %}
 
-{% block title %} Dashboard {% endblock %}
+{% block head %} <title>Dashboard</title>{% endblock %}
+
+
 {% block mainsection %}
-<section class="hero-section" style="margin-top: 100px;">
+<section class="hero-section" style="margin-top: 100px; padding: 20px;">
   <div class="hero-text">
     <h1>For a Smarter, Cleaner Future.</h1>
   </div>
   <div class="hero-icons">
-    <i class="fas fa-volume-up"></i>
-    <i class="fas fa-temperature-high"></i>
-    <i class="fas fa-wind"></i>
+    <a href="/map/noise">
+      <i class="fas fa-volume-up"></i>
+    </a>
+    <a href="/map/heat">
+      <i class="fas fa-temperature-half"></i>
+    </a>
+    <a href="/map/air">
+      <i class="fas fa-wind"></i>
+    </a>
   </div>
 </section>
 <section class="charts">
@@ -38,7 +46,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const ctx1 = document.getElementById('trendChart').getContext('2d');
     const ctx2 = document.getElementById('pollutionChart').getContext('2d');
-  
+
     new Chart(ctx1, {
       type: 'line',
       data: {
@@ -72,13 +80,13 @@ document.addEventListener('DOMContentLoaded', () => {
               color: '#000000', // Set the label color here
             }
           }
-          
-          
+
+
         }
-        
+
       }
     });
-  
+
     new Chart(ctx2, {
       type: 'line',
       data: {
@@ -91,11 +99,10 @@ document.addEventListener('DOMContentLoaded', () => {
           borderWidth: 2
         }]
       },
-      options: { responsive: true 
-        
+      options: { responsive: true
+
       }
     });
   })
 </script>
 {% endblock %}
-
