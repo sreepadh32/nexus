@@ -9,6 +9,7 @@
     font-family: 'Arial', sans-serif;
     background-color: #f8f9fa;
     color: #333;
+    overflow: hidden;
   }
   
   /* Dashboard Container */
@@ -116,15 +117,15 @@
     font-size: 14px;
   }
   
-  .status .good {
+  .status .Good {
     color: green;
   }
   
-  .status .bad {
+  .status .Bad {
     color: red;
   }
   
-  .status .moderate {
+  .status .Moderate {
     color: orange;
   }
   
@@ -145,6 +146,7 @@
   }
   
   .hero-icons i {
+    color: #f8f9fa;
     font-size: 30px;
     margin-right: 20px;
     cursor: pointer;
@@ -159,12 +161,15 @@
   }
   
   .chart {
-    background-color: white;
+    background-color: white !important; 
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0px 3px 10px rgba(0, 0, 0, 0.1);
   }
   
+  .chart h3 {
+    color: #333;
+  }
   /* Prediction Section */
   .prediction {
     background-color: white;

@@ -7,18 +7,21 @@
         <link rel="stylesheet" href="./static/loginstyle.css">
     </head>
     <body>
-<section class="user">
+<div class="header">
+  <h1>Smart City Sentinel</h1>
+  <h2>Leveraging IOT & GIS for Urban Pollution Hotspot Detection</h2>
+</div>
     <div class="user_options-container">
       <div class="user_options-text">
         <div class="user_options-unregistered">
           <h2 class="user_unregistered-title">Don't have an account?</h2>
-          <p class="user_unregistered-text">Banjo tote bag bicycle rights, High Life sartorial cray craft beer whatever street art fap.</p>
+          <p class="user_unregistered-text">Create an account to access all the features of our website.</p>
           <button class="user_unregistered-signup" id="signup-button">Sign up</button>
         </div>
   
         <div class="user_options-registered">
           <h2 class="user_registered-title">Have an account?</h2>
-          <p class="user_registered-text">Banjo tote bag bicycle rights, High Life sartorial cray craft beer whatever street art fap.</p>
+          <p class="user_registered-text">Please login to access all the features of our website.</p>
           <button class="user_registered-login" id="login-button">Login</button>
         </div>
       </div>
@@ -29,30 +32,30 @@
           <form class="forms_form" action="logincheck" method="post">
             <fieldset class="forms_fieldset">
               <div class="forms_field">
-                <input type="text" placeholder="Email" class="forms_field-input" name="email" required autofocus />
+                <input type="text" placeholder="Username" class="forms_field-input" name="email" required autofocus />
               </div>
               <div class="forms_field">
                 <input type="password" placeholder="Password" class="forms_field-input" name="password" required />
               </div>
             </fieldset>
             <div class="forms_buttons">
-              <button type="button" class="forms_buttons-forgot">Forgot password?</button>
+              <button type="button" class="forms_buttons-forgot">Forgot password? Contact admin.</button>
               <input type="submit" value="Log In" class="forms_buttons-action">
             </div>
           </form>
         </div>
         <div class="user_forms-signup">
           <h2 class="forms_title">Sign Up</h2>
-          <form class="forms_form">
+          <form class="forms_form" action="/signupcheck" method="post">
             <fieldset class="forms_fieldset">
               <div class="forms_field">
-                <input type="text" placeholder="Full Name" class="forms_field-input" required />
+                <input type="text" name="username" placeholder="Full Name" class="forms_field-input" required />
               </div>
               <div class="forms_field">
-                <input type="email" placeholder="Email" class="forms_field-input" required />
+                <input type="email" name="email" placeholder="Email" class="forms_field-input" required />
               </div>
               <div class="forms_field">
-                <input type="password" placeholder="Password" class="forms_field-input" required />
+                <input type="password" name="password" placeholder="Password" class="forms_field-input" required />
               </div>
             </fieldset>
             <div class="forms_buttons">

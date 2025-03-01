@@ -98,4 +98,9 @@
         <button type="submit">Delete User</button>
     </form>
 </body>
+<script>
+    {% if request.args.get("message") %}
+  alert("{{ request.args.get("message") }}");
+{% endif %}
+</script>
 </html>

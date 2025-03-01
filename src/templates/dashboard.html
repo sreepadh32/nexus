@@ -46,7 +46,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const ctx1 = document.getElementById('trendChart').getContext('2d');
     const ctx2 = document.getElementById('pollutionChart').getContext('2d');
-
+  
     new Chart(ctx1, {
       type: 'line',
       data: {
@@ -80,13 +80,13 @@ document.addEventListener('DOMContentLoaded', () => {
               color: '#000000', // Set the label color here
             }
           }
-
-
+          
+          
         }
-
+        
       }
     });
-
+  
     new Chart(ctx2, {
       type: 'line',
       data: {
@@ -99,10 +99,11 @@ document.addEventListener('DOMContentLoaded', () => {
           borderWidth: 2
         }]
       },
-      options: { responsive: true
-
+      options: { responsive: true 
+        
       }
     });
   })
 </script>
 {% endblock %}
+
