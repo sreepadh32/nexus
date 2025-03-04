@@ -1,13 +1,79 @@
 import pymysql as pymysql
 from flask import *
+import datetime
 from werkzeug.utils import secure_filename
 import requests
 import numpy as np
+import joblib
+import sklearn
+from sklearn.preprocessing import MinMaxScaler
+import pandas as pd
 
 task = Flask(__name__)
 task.secret_key = "abc"
-con =pymysql.connect(host="localhost", user="root", password="root", port=3306, db="smartcitydb",charset='utf8')
+con =pymysql.connect(host="localhost", user="root", password="root", port=3307, db="smartcitydb",charset='utf8')
 cmd = con.cursor()
+
+
+#-----model-----
+model = joblib.load("aqi_model.pkl")
+
+
+# Load the same MinMaxScaler used during dataset creation
+scaler = joblib.load("scaler.pkl")
+
+# Function to predict AQI based on sensor inputs
+def predict_aqi(temp, hum, gas, noise):
+    input_data = np.array([[temp, hum, gas, noise]])
+
+    print(f"Raw input data: {input_data}")  # Debugging step
+
+    # Apply MinMaxScaler transformation
+    input_data_scaled = scaler.transform(np.clip(input_data, scaler.data_min_, scaler.data_max_))  # <-- Possible error
+    print(f"Scaled input data: {input_data_scaled}")
+
+    predicted_aqi = model.predict(input_data_scaled)[0]
+    print(f"Predicted AQI: {predicted_aqi}")
+
+    return round(predicted_aqi, 2)
+
+
+
+# Min-Max Normalization for Heatmap
+def min_max_normalize(value, min=0, max=500):  # AQI range (0-500)
+    return round((value - min) / (max - min), 3)
+
+
+# Function to fetch the latest AQI sensor readings from the database
+def fetch_aqi_readings(date=None):
+    query = "SELECT * FROM readings ORDER BY id DESC LIMIT 20"  # Fetch latest 20 readings
+    cmd.execute(query)
+    results = cmd.fetchall()
+
+    aqi_data = []
+    for row in results:
+        temp = row[1]  # Temperature column
+        hum = row[2]   # Humidity column
+        gas = row[3]   # Gas level column
+        noise = row[4] # Noise level column
+        lat = row[5]   # Latitude
+        long = row[6]   # Longitude
+
+        # Predict AQI using the trained model
+        aqi_value = predict_aqi(temp, hum, gas, noise)
+
+        # Normalize AQI for heatmap visualization
+        weight = min_max_normalize(aqi_value, min=0, max=500)
+
+        aqi_data.append({
+            "lat": lat,
+            "long": long,
+            "aqi": aqi_value  # Include AQI value for coloring
+        })
+
+    return aqi_data
+
+
 
 # --------------------------------------------------Functions-------------------------------------------------
 def heat_index(t, rh):
@@ -45,6 +111,41 @@ def heat_status_calculation():
     else:
         heat_status="Bad"
     session["heat_status"]  = heat_status
+
+
+#----------------------chart----------
+
+
+def heatchart_index(t, rh):
+    hi = t + 0.5555 * (6.11 * np.exp((17.27 * t) / (237.7 + t)) * rh / 100 - 10)
+    return round(hi, 2)
+
+# Fetch sensor data and calculate effective temperature
+def get_sensor_data():
+    cmd.execute("""
+        SELECT date, temp, hum, gas, noise 
+        FROM readings 
+        ORDER BY date ASC
+    """)
+    data = cmd.fetchall()
+    print("Fetched Data:", data)
+
+    # Process data into a structured response
+    result = {
+        "date": [row[0].strftime("%d/%b") for row in data],  # Format as "22/Feb"
+
+        # Format as Mon, Tue, etc.
+        "effective_temp": [heatchart_index(row[1], row[2]) for row in data],
+        "gas": [row[3] for row in data],
+        "noise": [row[4] for row in data]
+    }
+    return result
+
+@task.route('/get_chart_data', methods=['GET'])
+def get_chart_data():
+    return jsonify(get_sensor_data())
+
+
 
 #------------------------------------------------- GEOLOCATION -------------------------------------------------
 @task.route('/location', methods=['POST'])
@@ -207,14 +308,18 @@ def chartheat():
     print(result)
     # Prepare data_points in the required format
     data_points = []
+    aqi_value = None
     for row in result:
         #calculate the effective temerature using heat index
         temp_c = heat_index(row[1],row[2])
+        aqi_value = predict_aqi(row[1], row[2], row[3], row[4])  # Assuming AQI value is stored in column 3
+        weight = min_max_normalize(temp_c, min=0, max=50)
         # Assuming the database has latitude in row[1], longitude in row[2], and weight in row[4]
         data_point = {
             'lat': 12.2429,  # Replace with the correct column index for latitude
             'lon': 75.2346,  # Replace with the correct column index for longitude
-            'weight': min_max_normalize(temp_c,min=0, max=50)  #min max normalised for 0-50 degrees
+            'weight': weight,#min max normalised for 0-50 degrees
+            'aqi': aqi_value
         }
         data_points.append(data_point)
         print(data_points)
@@ -224,7 +329,16 @@ def chartheat():
         heat_status="Moderate"
     else:
         heat_status="Bad"
-    return render_template('heatmap.html', data_points=data_points ,map="Effective Heat", heat_status=heat_status)
+
+    # Categorize AQI values
+    if aqi_value <= 50:
+        aqi_status = "Good"
+    elif 51 <= aqi_value <= 100:
+        aqi_status = "Moderate"
+    else:
+        aqi_status = "Bad"
+
+    return render_template('heatmap.html', data_points=data_points ,map="Effective Heat", heat_status=heat_status , aqi_status=aqi_status)
 
 @task.route('/map/noise')
 def chartnoise():
@@ -263,6 +377,50 @@ def chartair():
     #     print(data_points)
     # # Pass data_points to the template
     return render_template('heatmap.html', data_points=None,map="Air Pollution")
+
+
+# ----------------------------- Heatmap Routes -----------------------------
+
+# Default AQI Heatmap
+@task.route('/map/heatmap', methods=['GET'])
+def aqi_heatmap():
+    data_points = fetch_aqi_readings()
+    return render_template('heatmap.html', data_points=data_points, map="Air Quality Index (AQI)")
+
+
+# API to fetch AQI data dynamically
+@task.route('/map/heat', methods=['GET'])
+def get_aqi_heatmap():
+    data_points = fetch_aqi_readings()
+    return jsonify({"data_points": data_points})
+
+
+# -------------------------------- Location Handling --------------------------------
+@task.route('/location', methods=['POST'])
+def handle_location_post():
+    data = request.get_json()
+    latitude = data['latitude']
+    longitude = data['longitude']
+    print("Received latitude: %s" % latitude)
+    print("Received longitude: %s" % longitude)
+
+    url = f"https://geocode.maps.co/reverse?lat={latitude}&lon={longitude}"
+
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        data = response.json()
+
+        if "display_name" in data:
+            location_name = data["display_name"]
+            session["location"] = location_name
+            return jsonify({'message': 'Location received successfully', 'location': location_name})
+        else:
+            return jsonify({'error': 'Could not fetch location data'}), 500
+
+    except requests.RequestException as e:
+        print(f"Error fetching location: {e}")
+        return jsonify({'error': 'Failed to connect to the location service'}), 500
 
 # -------------------------------------------------- Admin -----------------------------------------------------
 @task.route("/admin-settings")

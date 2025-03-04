@@ -43,49 +43,51 @@
 {% block script %}
 <script>
 // Example for using Chart.js to render charts
-document.addEventListener('DOMContentLoaded', () => {
-    const ctx1 = document.getElementById('trendChart').getContext('2d');
-    const ctx2 = document.getElementById('pollutionChart').getContext('2d');
-  
-    new Chart(ctx1, {
-      type: 'line',
-      data: {
-        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-        datasets: [{
-          label: 'Temperature',
-          data: [200, 300, 400, 500, 450, 300, 200],
-          backgroundColor: 'rgba(200, 57, 57, 0.2)',
-          borderColor: 'rgba(193, 66, 66, 0.9)',
-          borderWidth: 2
-        },
-        {
-          label: 'Humidity',
-          data: [200, 300, 400, 500, 450, 300, 200],
-          backgroundColor: 'rgba(57, 126, 200, 0.2)',
-          borderColor: 'rgb(66, 181, 199)',
-          borderWidth: 2
-        }]
-      },
-      options: {
-        responsive: true,
-        scales: {
-          x: {
-            ticks: {
-              color: '#000000', // Set the label color here
-            }
-          },
-          y: {
-            ticks: {
-              beginAtZero: true,
-              color: '#000000', // Set the label color here
-            }
-          }
-          
-          
+fetch('/get_chart_data')
+    .then(response => response.json())
+    .then(data => {
+        console.log("✅ API Response:", data); // Debugging log
+        if (!data.date || !data.effective_temp) {
+            console.error("❌ Missing data fields!");
+            return;
         }
-        
-      }
-    });
+
+        if (data.date.length === 0) {
+            console.error("❌ No data to display.");
+            return;
+        }
+
+        const ctx1 = document.getElementById('trendChart').getContext('2d');
+        new Chart(ctx1, {
+            type: 'line',
+            data: {
+                labels: data.date, // ✅ Use dynamic date labels (22/Feb)
+                datasets: [{
+                    label: 'Effective Temperature',
+                    data: data.effective_temp,
+                    backgroundColor: 'rgba(200, 57, 57, 0.2)',
+                    borderColor: 'rgba(193, 66, 66, 0.9)',
+                    borderWidth: 2
+                },
+                {
+                    label: 'Gas Level',
+                    data: data.gas,
+                    backgroundColor: 'rgba(34, 139, 34, 0.2)',
+                    borderColor: 'rgb(66, 181, 199)',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: { ticks: { color: '#000000' } },
+                    y: { beginAtZero: true, ticks: { color: '#000000' } }
+                }
+            }
+        });
+    })
+    .catch(error => console.error("❌ Fetch Error:", error));
+
   
     new Chart(ctx2, {
       type: 'line',
