@@ -82,19 +82,34 @@
       }),
     });
 
-    // Log to check if the heatmap is successfully initialized
-    console.log('Heatmap initialized with dummy data');
-
     setInterval(function() {
       location.reload();
     }, 60000); // 60000 milliseconds = 1 minute
 
-    {% if map!= "Predicted Air Quality Index" %}
-    // -------------------------Slider--------------------
+    // Get slider elements (shared between both modes)
     const slider = document.getElementById('date-slider');
     const dateLabel = document.getElementById('date-label');
 
-    // Generate date options: past 5 days and 2 days in the future
+    // Add a function to update the heatmap data
+    function updateHeatmapData(newDataPoints) {
+        // Clear existing features
+        heatmapSource.clear();
+        
+        // Create new features from the updated data points
+        const newFeatures = newDataPoints.map((point) => {
+            const feature = new ol.Feature({
+                geometry: new ol.geom.Point(ol.proj.fromLonLat([point.lon, point.lat])),
+            });
+            feature.set('weight', point.weight);
+            return feature;
+        });
+        
+        // Add new features to the heatmap source
+        heatmapSource.addFeatures(newFeatures);
+    }
+
+    {% if map!= "Predicted Air Quality Index" %}
+    // -------------------------Historical Data Slider--------------------
     const today = new Date();
     const dates = [];
 
@@ -128,22 +143,57 @@
         const selectedDate = dates[slider.value];
         const formattedDate = formatDate(selectedDate);
         
-        // Send the selected date to the backend
-        fetch('/map/heat/date', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ date: formattedDate })
-        })
+        // Send the selected date to the backend using GET instead of POST
+        fetch(`/map/heat/date?date=${formattedDate}`)
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+                
+                // Update the heatmap with new data
+                updateHeatmapData(data.data_points);
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+    });
+    {% else %}
+    // -------------------------AQI Prediction Slider--------------------
+    // Update prediction label on slider input
+    function updatePredictionLabel() {
+      if (slider.value == 0) {
+    dateLabel.textContent = 'Tomorrow';
+    fetch('/map/aqipredict?format=json')
         .then(response => response.json())
         .then(data => {
             console.log('Success:', data);
+            if (data.data_points) {
+                updateHeatmapData(data.data_points);
+            }
         })
         .catch((error) => {
             console.error('Error:', error);
         });
-    });
+} else {
+    dateLabel.textContent = 'Next Week';
+    fetch('/map/aqipredictweek?format=json')
+        .then(response => response.json())
+        .then(data => {
+            console.log('Success:', data);
+            if (data.data_points) {
+                updateHeatmapData(data.data_points);
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+    }
+
+    // Initialize prediction label
+    updatePredictionLabel();
+
+    // Add event listener to update prediction on slider change
+    slider.addEventListener('input', updatePredictionLabel);
     {% endif %}
   </script>
 {% endblock %}

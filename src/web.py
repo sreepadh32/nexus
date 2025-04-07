@@ -523,7 +523,6 @@ def chartair():
 
 # ----------------------------------------- Heatmap Prediction Routes --------------------------------------------
 
-# Default AQI Heatmap
 @task.route('/map/aqipredict', methods=['GET'])
 def aqi_heatmapday():
     cmd.execute("SELECT * FROM readings r1 INNER JOIN (SELECT lat, lon, MAX(DATE) AS max_date, MAX(TIME) AS max_time FROM "
@@ -543,14 +542,19 @@ def aqi_heatmapday():
         aqi_value = predict_aqi(temp, hum, gas, noise)
 
         # Normalize AQI for heatmap visualization
-        weight = min_max_normalize(aqi_value, min=50, max=200)
+        weight = min_max_normalize(aqi_value, min=0, max=300)
 
         aqi_data.append({
             "lat": lat,
             "lon": lon,
             "weight": weight  # Include AQI value for coloring
         })
-    return render_template('heatmap.html', data_points=aqi_data, map="Predicted Air Quality Index")
+    
+    # Check if requesting JSON format (based on Accept header or json parameter)
+    if request.args.get('format') == 'json' or request.headers.get('Accept') == 'application/json':
+        return jsonify({"data_points": aqi_data})
+    else:
+        return render_template('heatmap.html', data_points=aqi_data, map="Predicted Air Quality Index")
 
 @task.route('/map/aqipredictweek', methods=['GET'])
 def aqi_heatmapweek():
@@ -560,9 +564,12 @@ def aqi_heatmapweek():
             ROUND(AVG(temp), 2) AS avg_temperature,
             ROUND(AVG(hum), 2) AS avg_humidity,
             ROUND(AVG(gas), 2) AS avg_gas,
-            ROUND(AVG(noise), 2) AS avg_noise
+            ROUND(AVG(noise), 2) AS avg_noise,
+            lat,
+            lon
         FROM readings
         WHERE date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+        GROUP BY lat, lon
     """)
     
     results = cmd.fetchall()
@@ -580,7 +587,7 @@ def aqi_heatmapweek():
         aqi_value = predict_aqi(temp, hum, gas, noise)
         
         # Normalize AQI for heatmap visualization
-        weight = min_max_normalize(aqi_value, min=50, max=200)
+        weight = min_max_normalize(aqi_value, min=0, max=300)
         
         aqi_data.append({
             "lat": lat,
@@ -588,7 +595,11 @@ def aqi_heatmapweek():
             "weight": weight  # Include AQI value for coloring
         })
     
-    return render_template('heatmap.html', data_points=aqi_data, map="Predicted Air Quality Index")
+    # Check if requesting JSON format (based on Accept header or json parameter)
+    if request.args.get('format') == 'json' or request.headers.get('Accept') == 'application/json':
+        return jsonify({"data_points": aqi_data})
+    else:
+        return render_template('heatmap.html', data_points=aqi_data, map="Predicted Air Quality Index")
 
 # -------------------------------------------------- Admin -----------------------------------------------------
 @task.route("/admin-settings")
