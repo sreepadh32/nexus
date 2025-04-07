@@ -1,7 +1,24 @@
 {% extends "base.html" %}
 
-{% block head %} <title>Dashboard</title>{% endblock %}
+{% block head %}
+<title>Dashboard</title>
+<style>
+  .chart-selector {
+  display: flex;
+  justify-content: center;
+  margin: 10px 0;
+}
 
+.chart-selector label {
+  margin: 0 10px;
+  cursor: pointer;
+}
+
+.chart-selector input[type="radio"] {
+  margin-right: 5px;
+}
+</style>
+{% endblock %}
 
 {% block mainsection %}
 <section class="hero-section" style="margin-top: 100px; padding: 20px;">
@@ -23,6 +40,12 @@
 <section class="charts">
   <div class="chart trend glass">
     <h3>Trend in Past Week</h3>
+    <div class="chart-selector">
+      <label><input type="radio" name="trend-param" value="temp" checked> Temperature</label>
+      <label><input type="radio" name="trend-param" value="hum"> Humidity</label>
+      <label><input type="radio" name="trend-param" value="gas"> Gas</label>
+      <label><input type="radio" name="trend-param" value="noise"> Noise</label>
+    </div>
     <canvas id="trendChart"></canvas>
   </div>
   <div class="chart limit glass ">
@@ -42,70 +65,142 @@
 
 {% block script %}
 <script>
-// Example for using Chart.js to render charts
-fetch('/get_chart_data')
-    .then(response => response.json())
-    .then(data => {
-        console.log("✅ API Response:", data); // Debugging log
-        if (!data.date || !data.effective_temp) {
-            console.error("❌ Missing data fields!");
-            return;
-        }
+// Global variables for chart and data
+let trendChart;
+let trendData = {
+    dates: [],
+    temps: [],
+    hums: [],
+    gases: [],
+    noises: []
+};
 
-        if (data.date.length === 0) {
-            console.error("❌ No data to display.");
-            return;
-        }
+// Function to update the chart based on selected parameter
+function updateTrendChart(parameter) {
+    let data, color, borderColor, label, yAxisMin, yAxisMax;
+    
+    switch(parameter) {
+        case 'temp':
+            data = trendData.temps;
+            color = 'rgba(193, 66, 66, 0.2)';
+            borderColor = 'rgba(193, 66, 66, 0.9)';
+            label = 'Temperature';
+            yAxisMin = 0;
+            yAxisMax = 60;
+            break;
+        case 'hum':
+            data = trendData.hums;
+            color = 'rgba(57, 126, 200, 0.2)';
+            borderColor = 'rgb(66, 181, 199)';
+            label = 'Humidity';
+            yAxisMin = 0;
+            yAxisMax = 100;
+            break;
+        case 'gas':
+            data = trendData.gases;
+            color = 'rgba(75, 192, 75, 0.2)';
+            borderColor = 'rgba(75, 192, 75, 0.9)';
+            label = 'Gas';
+            yAxisMin = 100;
+            yAxisMax = 2000;
+            break;
+        case 'noise':
+            data = trendData.noises;
+            color = 'rgba(255, 159, 64, 0.2)';
+            borderColor = 'rgba(255, 159, 64, 0.9)';
+            label = 'Noise';
+            yAxisMin = 0;
+            yAxisMax = 120;
+            break;
+    }
+    
+    // Update chart data
+    trendChart.data.datasets = [{
+        label: label,
+        data: data,
+        backgroundColor: color,
+        borderColor: borderColor,
+        borderWidth: 2
+    }];
+    
+    // Update y-axis scale based on the selected parameter
+    trendChart.options.scales.y.min = yAxisMin;
+    trendChart.options.scales.y.max = yAxisMax;
+    
+    trendChart.update();
+}
 
-        const ctx1 = document.getElementById('trendChart').getContext('2d');
-        new Chart(ctx1, {
-            type: 'line',
-            data: {
-                labels: data.date, // ✅ Use dynamic date labels (22/Feb)
-                datasets: [{
-                    label: 'Effective Temperature',
-                    data: data.effective_temp,
-                    backgroundColor: 'rgba(200, 57, 57, 0.2)',
-                    borderColor: 'rgba(193, 66, 66, 0.9)',
-                    borderWidth: 2
+// Fetch data and initialize charts when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    const ctx1 = document.getElementById('trendChart').getContext('2d');
+    const ctx2 = document.getElementById('pollutionChart').getContext('2d');
+    
+    // Fetch trend data
+    fetch('/get_trend_data')
+        .then(response => response.json())
+        .then(data => {
+            // Store data globally
+            trendData = data;
+            
+            // Initialize trend chart
+            trendChart = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: data.dates,
+                    datasets: [{
+                        label: 'Temperature',
+                        data: data.temps,
+                        backgroundColor: 'rgba(193, 66, 66, 0.2)',
+                        borderColor: 'rgba(193, 66, 66, 0.9)',
+                        borderWidth: 2
+                    }]
                 },
-                {
-                    label: 'Gas Level',
-                    data: data.gas,
-                    backgroundColor: 'rgba(34, 139, 34, 0.2)',
-                    borderColor: 'rgb(66, 181, 199)',
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    x: { ticks: { color: '#000000' } },
-                    y: { beginAtZero: true, ticks: { color: '#000000' } }
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            ticks: {
+                                color: '#000000'
+                            }
+                        },
+                        y: {
+                            min: 0,
+                            max: 60, // Default for temperature
+                            ticks: {
+                                color: '#000000'
+                            }
+                        }
+                    }
                 }
-            }
-        });
-    })
-    .catch(error => console.error("❌ Fetch Error:", error));
-
-  
+            });
+        })
+        .catch(error => console.error('Error fetching trend data:', error));
+    
+    // Initialize pollution chart (unchanged)
     new Chart(ctx2, {
-      type: 'line',
-      data: {
-        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-        datasets: [{
-          label: 'Pollution',
-          data: [500, 600, 700, 650, 600, 580, 590, 600, 610, 620, 630, 640],
-          backgroundColor: 'rgba(255, 99, 132, 0.2)',
-          borderColor: 'rgba(255, 99, 132, 1)',
-          borderWidth: 2
-        }]
-      },
-      options: { responsive: true 
-        
-      }
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            datasets: [{
+                label: 'Pollution',
+                data: [500, 600, 700, 650, 600, 580, 590, 600, 610, 620, 630, 640],
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                borderColor: 'rgba(255, 99, 132, 1)',
+                borderWidth: 2
+            }]
+        },
+        options: { 
+            responsive: true 
+        }
     });
-  })
+    
+    // Add event listeners for radio buttons
+    const radioButtons = document.querySelectorAll('input[name="trend-param"]');
+    radioButtons.forEach(radio => {
+        radio.addEventListener('change', function() {
+            updateTrendChart(this.value);
+        });
+    });
+});
 </script>
 {% endblock %}
-

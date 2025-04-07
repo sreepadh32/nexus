@@ -25,104 +25,71 @@
         <section class="content">
           <!-- OpenLayers Map -->
           <div id="map" style="width:100%; height:900px; z-index: 0; margin-top: 0px;"></div>
-
+        {% if map!= "Predicted Air Quality Index" %}
         <div class="slider-container glass " style="position: absolute; z-index: 10;bottom: 10px;">
-            <input id="date-slider" type="range" min="0" max="7" step="1" value="5">
+            <input id="date-slider" type="range" min="0" max="5" step="1" value="5">
             <div id="selected-date">Selected Date: <span id="date-label"></span></div>
         </div>
+        {% else %}
+
+        <div class="slider-container glass " style="position: absolute; z-index: 10;bottom: 10px;">
+          <input id="date-slider" type="range" min="0" max="1" step="1" value="0">
+          <div id="selected-date">Prediction for:  <span id="date-label"></span></div>
+        </div>
+
+        {% endif %}
         </section>
 {% endblock %}
 
 {% block script %}
   <script>
- // Initialize OpenLayers map
-const baseLayer = new ol.layer.Tile({
-  source: new ol.source.OSM(),
-});
-
-// Fetch the data from Flask and parse it
-const data_points = {{ data_points | tojson }};
-
-// Function to determine color based on AQI value
-function getAQIColor(aqi) {
-    if (aqi <= 50) {
-        return 'rgba(0, 255, 0, 0.5)'; // Green - Good
-    } else if (aqi <= 100) {
-        return 'rgba(255, 255, 0, 0.5)'; // Yellow - Moderate
-    } else {
-        return 'rgba(255, 0, 0, 0.5)'; // Red - Bad
-    }
-}
-
-// Convert data points to OpenLayers features with AQI-based color styling
-const features = data_points.map((point) => {
-    const feature = new ol.Feature({
-        geometry: new ol.geom.Point(ol.proj.fromLonLat([point.lon, point.lat])),
+   // Initialize OpenLayers map
+   const baseLayer = new ol.layer.Tile({
+      source: new ol.source.OSM(),
     });
 
-    // Assign AQI-based color
-    const aqiColor = getAQIColor(point.aqi);
+    // Dummy data points for heat map (latitude, longitude, and weight)
+        const data_points = {{ data_points | tojson }};
 
-    feature.setStyle(new ol.style.Style({
-        image: new ol.style.Circle({
-            radius: 15,
-            fill: new ol.style.Fill({ color: aqiColor }),
-            stroke: new ol.style.Stroke({ color: 'black', width: 1 }),
-        }),
-    }));
+    // Convert data points to OpenLayers features
+    const features = data_points.map((point) => {
+      const feature = new ol.Feature({
+        geometry: new ol.geom.Point(ol.proj.fromLonLat([point.lon, point.lat])),
+      });
+      feature.set('weight', point.weight);
+      return feature;
+    });
 
-    return feature;
-});
+    // Heatmap source and layer
+    const heatmapSource = new ol.source.Vector({
+      features: features,
+    });
 
-// Heatmap source and layer with AQI-based features
-const vectorSource = new ol.source.Vector({
-    features: features,
-});
+    const heatmapLayer = new ol.layer.Heatmap({
+      source: heatmapSource,
+      blur: 20,   // Blurring effect radius
+      radius: 20, // Radius of the heatmap points
+      weight: (feature) => feature.get('weight'), // Use the weight property for intensity
+    });
 
-const vectorLayer = new ol.layer.Vector({
-    source: vectorSource,
-});
-
-// Heatmap Layer
-const heatmapSource = new ol.source.Vector({
-    features: data_points.map((point) => {
-        const feature = new ol.Feature({
-            geometry: new ol.geom.Point(ol.proj.fromLonLat([point.lon, point.lat])),
-        });
-
-        feature.set('weight', point.weight);
-
-        return feature;
-    }),
-});
-
-const heatmapLayer = new ol.layer.Heatmap({
-    source: heatmapSource,
-    blur: 30,       // Increased blur for a smoother heatmap
-    radius: 40,     // Increased radius to expand data point influence
-    weight: (feature) => feature.get('weight'), // Set weight dynamically
-});
-
-// Create map with base layer, vector layer (AQI points), and heatmap layer
-const map = new ol.Map({
-    target: 'map',
-    layers: [baseLayer, heatmapLayer, vectorLayer],  // Both heatmap and AQI points
-    view: new ol.View({
+    // Create map with base layer and heatmap
+    const map = new ol.Map({
+      target: 'map',
+      layers: [baseLayer, heatmapLayer],
+      view: new ol.View({
         center: ol.proj.fromLonLat([75.231870, 12.240140]),
-        zoom: 16,
-    }),
-});
+        zoom: 16, // Set the zoom level
+      }),
+    });
 
-// Log to check if the AQI-based map is initialized correctly
-console.log("AQI-based heatmap initialized with:", data_points);
+    // Log to check if the heatmap is successfully initialized
+    console.log('Heatmap initialized with dummy data');
 
-// Refresh page every 60 seconds to update AQI values
-setInterval(function() {
-    location.reload();
-}, 60000);
+    setInterval(function() {
+      location.reload();
+    }, 60000); // 60000 milliseconds = 1 minute
 
-
-
+    {% if map!= "Predicted Air Quality Index" %}
     // -------------------------Slider--------------------
     const slider = document.getElementById('date-slider');
     const dateLabel = document.getElementById('date-label');
@@ -136,13 +103,7 @@ setInterval(function() {
         pastDate.setDate(today.getDate() - i);
         dates.push(pastDate);
     }
-    dates.push(new Date(today)); // Today
-
-    for (let i = 1; i <= 2; i++) {
-        const futureDate = new Date(today);
-        futureDate.setDate(today.getDate() + i);
-        dates.push(futureDate); // 1 and 2 days in the future
-    }
+    dates.push(new Date(today)); // Today 
 
     // Format date as YYYY-MM-DD
     function formatDate(date) {
@@ -166,7 +127,7 @@ setInterval(function() {
         updateDateLabel();
         const selectedDate = dates[slider.value];
         const formattedDate = formatDate(selectedDate);
-
+        
         // Send the selected date to the backend
         fetch('/map/heat/date', {
             method: 'POST',
@@ -183,5 +144,6 @@ setInterval(function() {
             console.error('Error:', error);
         });
     });
+    {% endif %}
   </script>
 {% endblock %}

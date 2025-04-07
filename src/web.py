@@ -10,26 +10,29 @@ from sklearn.preprocessing import MinMaxScaler
 import pandas as pd
 
 task = Flask(__name__)
+# Session Configuration
+task.config['SESSION_COOKIE_NAME'] = 'my_session'
+task.config['SESSION_COOKIE_HTTPONLY'] = True
+task.config['SESSION_PERMANENT'] = False
+
 task.secret_key = "abc"
 con =pymysql.connect(host="localhost", user="root", password="root", port=3307, db="smartcitydb",charset='utf8')
 cmd = con.cursor()
 
-
-#-----model-----
+#-----------------------------------------------model---------------------------------------------------------
+#predict AQI
 model = joblib.load("aqi_model.pkl")
 
 
-# Load the same MinMaxScaler used during dataset creation
 scaler = joblib.load("scaler.pkl")
 
-# Function to predict AQI based on sensor inputs
 def predict_aqi(temp, hum, gas, noise):
     input_data = np.array([[temp, hum, gas, noise]])
 
-    print(f"Raw input data: {input_data}")  # Debugging step
+    print(f"Raw input data: {input_data}")
 
-    # Apply MinMaxScaler transformation
-    input_data_scaled = scaler.transform(np.clip(input_data, scaler.data_min_, scaler.data_max_))  # <-- Possible error
+    #MinMaxScaler transformation
+    input_data_scaled = scaler.transform(np.clip(input_data, scaler.data_min_, scaler.data_max_))
     print(f"Scaled input data: {input_data_scaled}")
 
     predicted_aqi = model.predict(input_data_scaled)[0]
@@ -38,52 +41,18 @@ def predict_aqi(temp, hum, gas, noise):
     return round(predicted_aqi, 2)
 
 
-
-# Min-Max Normalization for Heatmap
-def min_max_normalize(value, min=0, max=500):  # AQI range (0-500)
-    return round((value - min) / (max - min), 3)
-
-
-# Function to fetch the latest AQI sensor readings from the database
-def fetch_aqi_readings(date=None):
-    query = "SELECT * FROM readings ORDER BY id DESC LIMIT 20"  # Fetch latest 20 readings
-    cmd.execute(query)
-    results = cmd.fetchall()
-
-    aqi_data = []
-    for row in results:
-        temp = row[1]  # Temperature column
-        hum = row[2]   # Humidity column
-        gas = row[3]   # Gas level column
-        noise = row[4] # Noise level column
-        lat = row[5]   # Latitude
-        long = row[6]   # Longitude
-
-        # Predict AQI using the trained model
-        aqi_value = predict_aqi(temp, hum, gas, noise)
-
-        # Normalize AQI for heatmap visualization
-        weight = min_max_normalize(aqi_value, min=0, max=500)
-
-        aqi_data.append({
-            "lat": lat,
-            "long": long,
-            "aqi": aqi_value  # Include AQI value for coloring
-        })
-
-    return aqi_data
-
-
-
 # --------------------------------------------------Functions-------------------------------------------------
 def heat_index(t, rh):
     """
     Calculate Heat Index using the Steadmans Heat Index formula.
     
     :param t: Temperature in Celsius
+    # Predict the AQI using the pre-trained model
     :param rh: Relative Humidity in %
     :return: Heat Index in Celsius
     """
+    t = float(t)
+    rh = float(rh)
     hi = t + 0.5555 * (6.11 * np.exp((17.27 * t) / (237.7 + t)) * rh / 100 - 10)
     return round(hi, 2)
 
@@ -91,60 +60,12 @@ def min_max_normalize(value, min=0, max=50):
     """
     Min-Max Normalization (scales values between 0 and 1).
     
-    :param value: Heat Index value
+    :param value: Value to normalise
     :param min: Minimum expected HI (default: 0°C)
     :param max: Maximum expected HI (default: 50°C)
     :return: Normalized Heat Index (0 to 1)
     """
     return round((value - min) / (max - min), 3)
-
-def heat_status_calculation():
-    cmd.execute("SELECT * FROM readings WHERE id = (SELECT MAX(id) FROM readings)")
-    result=cmd.fetchall()
-    print(result)
-    for row in result:
-        temp_c = heat_index(row[1],row[2])
-    if temp_c <= 20:
-        heat_status="Good"
-    elif 21 <= temp_c <= 35:
-        heat_status="Moderate"
-    else:
-        heat_status="Bad"
-    session["heat_status"]  = heat_status
-
-
-#----------------------chart----------
-
-
-def heatchart_index(t, rh):
-    hi = t + 0.5555 * (6.11 * np.exp((17.27 * t) / (237.7 + t)) * rh / 100 - 10)
-    return round(hi, 2)
-
-# Fetch sensor data and calculate effective temperature
-def get_sensor_data():
-    cmd.execute("""
-        SELECT date, temp, hum, gas, noise 
-        FROM readings 
-        ORDER BY date ASC
-    """)
-    data = cmd.fetchall()
-    print("Fetched Data:", data)
-
-    # Process data into a structured response
-    result = {
-        "date": [row[0].strftime("%d/%b") for row in data],  # Format as "22/Feb"
-
-        # Format as Mon, Tue, etc.
-        "effective_temp": [heatchart_index(row[1], row[2]) for row in data],
-        "gas": [row[3] for row in data],
-        "noise": [row[4] for row in data]
-    }
-    return result
-
-@task.route('/get_chart_data', methods=['GET'])
-def get_chart_data():
-    return jsonify(get_sensor_data())
-
 
 
 #------------------------------------------------- GEOLOCATION -------------------------------------------------
@@ -177,10 +98,19 @@ def handle_location():
         print(f"Error fetching location: {e}")
         return jsonify({'error': 'Failed to connect to the location service'}), 500
     
-#------------------------------------------------- Header -------------------------------------------------------
+#------------------------------------------------- Notifications -------------------------------------------------------
 
 
-# ------------------------------------------------ LOgin And Signup ---------------------------------------------
+@task.route('/notifications', methods=['GET'])
+def get_notifications():
+    cmd.execute("SELECT * FROM notification ORDER BY timestamp DESC;")
+    notifications = cmd.fetchall()
+    
+    print("Fetched notifications:", notifications)  # Debugging line to check fetched notifications
+    return render_template('notification_log.html', notifications=notifications)
+
+
+# ------------------------------------------------ LOgin And Signup --------------------------------------------- 
 @task.route('/')
 def login():
     return render_template('login.html')
@@ -200,6 +130,8 @@ def logincheck():
         session['usertype']=result[3]
         session["username"]=result[1]
         session["email"]=result[4]
+        session["lon"]=75.2346
+        session["lat"]=12.2429
         return redirect('/dashboard')
     else:
         return '''<script>alert("INVALID USERNAME AND PASSWORD");window.location.replace("/");</script>'''
@@ -223,13 +155,185 @@ def signupcheck():
     return '''<script>alert("SIGNUP SUCCESSFUL");window.location.replace("/");</script>'''
 
 # ------------------------------------------------- Dashboard ------------------------------------------------------------
+
+def heat_status_calculation():
+    lon = session.get("lon")
+    lat = session.get("lat")
+    coord_margin = 0.005
+    print("Looking for coordinates:", lon, lat)
+    try:
+        cmd.execute("""
+            SELECT * FROM readings 
+            WHERE lon BETWEEN %s - %s AND %s + %s 
+            AND lat BETWEEN %s - %s AND %s + %s 
+            ORDER BY id DESC LIMIT 1
+        """, (lon, coord_margin, lon, coord_margin, lat, coord_margin, lat, coord_margin))
+
+        result = cmd.fetchone()
+        
+        if result is None:
+            print("No data found for the specified coordinates.")
+            session["heat_status"] = "Unknown"
+            return
+        
+        temp_c = heat_index(result[1], result[2])
+        
+        if temp_c <= 20:
+            heat_status = "Good"
+        elif 21 <= temp_c <= 35:
+            heat_status = "Moderate"
+        else:
+            heat_status = "Bad"
+        
+        session["heat_status"] = heat_status
+        print("Heat Status:", heat_status)
+        
+    except Exception as e:
+        print(f"An error occurred during heat status calculation: {e}")
+        session["heat_status"] = "Error"
+
+def noise_status_calculation():
+    lon = session.get("lon")
+    lat = session.get("lat")
+    coord_margin = 0.005
+    print("Looking for coordinates:", lon, lat)
+    try:
+        cmd.execute("""
+            SELECT * FROM readings 
+            WHERE lon BETWEEN %s - %s AND %s + %s 
+            AND lat BETWEEN %s - %s AND %s + %s 
+            ORDER BY id DESC LIMIT 1
+        """, (lon, coord_margin, lon, coord_margin, lat, coord_margin, lat, coord_margin))
+
+        result = cmd.fetchone()
+        noise=result[4]
+        
+        if result is None:
+            print("No data found for the specified coordinates.")
+            session["noise_status"] = "Unknown"
+            return
+                
+        if noise <= 20:
+            noise_status = "Good"
+        elif 21 <= noise <= 50:
+            noise_status = "Moderate"
+        else:
+            noise_status = "Bad"
+        
+        session["noise_status"] = noise_status
+        print("Noise Status:", noise_status)
+        
+    except Exception as e:
+        print(f"An error occurred during noise status calculation: {e}")
+        session["noise_status"] = "Error"
+
+def air_status_calculation():
+    lon = session.get("lon")
+    lat = session.get("lat")
+    coord_margin = 0.005
+    print("Looking for coordinates:", lon, lat)
+    try:
+        cmd.execute("""
+            SELECT * FROM readings 
+            WHERE lon BETWEEN %s - %s AND %s + %s 
+            AND lat BETWEEN %s - %s AND %s + %s 
+            ORDER BY id DESC LIMIT 1
+        """, (lon, coord_margin, lon, coord_margin, lat, coord_margin, lat, coord_margin))
+
+        result = cmd.fetchone()
+        
+        if result is None:
+            print("No data found for the specified coordinates.")
+            session["air_status"] = "Unknown"
+            return
+        air=result[3]
+        if air <= 200:
+            air_status = "Good"
+        elif 201 <= air <= 350:
+            air_status = "Moderate"
+        else:
+            air_status = "Bad"
+        
+        session["air_status"] = air_status
+        print("Air Status:", air_status)
+        
+    except Exception as e:
+        print(f"An error occurred during air status calculation: {e}")
+        session["air_status"] = "Error"
+
 @task.route('/dashboard')
 def dashboard():
     if session["logid"] is not None:
-
+        heat_status_calculation()
+        noise_status_calculation()
+        air_status_calculation()
         return render_template('dashboard.html')
     else:
         return redirect("/")
+    
+@task.route('/get_trend_data')
+def get_trend_data():
+    # Get coordinates from session
+    lon = session.get("lon")
+    lat = session.get("lat")
+    coord_margin = 0.005
+    
+    # Calculate date for 7 days ago
+    current_date = datetime.datetime.now().date()
+    seven_days_ago = current_date - datetime.timedelta(days=7)
+    print("Date for 7 days ago:", seven_days_ago)
+    
+    try:
+        # Query to get aggregated data for the past 7 days
+        cmd.execute("""
+            SELECT 
+                date,
+                AVG(temp) as avg_temp,
+                AVG(hum) as avg_hum,
+                AVG(gas) as avg_gas,
+                AVG(noise) as avg_noise
+            FROM readings
+            WHERE 
+                lon BETWEEN %s - %s AND %s + %s
+                AND lat BETWEEN %s - %s AND %s + %s
+                AND date >= %s
+            GROUP BY date
+            ORDER BY date ASC
+            LIMIT 7
+        """, (lon, coord_margin, lon, coord_margin, lat, coord_margin, lat, coord_margin, seven_days_ago))
+        
+        results = cmd.fetchall()
+
+        print(f"trend chart results: {results}")
+        
+        # Prepare the data for the chart
+        dates = []
+        temps = []
+        hums = []
+        gases = []
+        noises = []
+        
+        for row in results:
+            # Format date as day name (Mon, Tue, etc.)
+            date_obj = row[0]
+            day_name = date_obj.strftime('%a')
+            dates.append(day_name)
+            temps.append(float(row[1]))
+            hums.append(float(row[2]))
+            gases.append(float(row[3]))
+            noises.append(float(row[4]))
+        
+        return jsonify({
+            'dates': dates,
+            'temps': temps,
+            'hums': hums,
+            'gases': gases,
+            'noises': noises
+        })
+    
+    except Exception as e:
+        print(f"Error fetching trend data: {e}")
+        return jsonify({'error': str(e)}), 500
 
 
 @task.route("/change-password", methods=["POST", "GET"])
@@ -288,146 +392,210 @@ def change_username():
 
     return render_template("change-username.html")
 
-
-
 # ---------------------------------------------------- Map ------------------------------------------------------------
-# @task.route('/map')
-# def showHeatmap():
-#     data_points = [
-#        {'lon': 75.231870, 'lat': 12.240140, 'weight': 0.8},
-#        {'lon': 75.233870, 'lat': 12.242140, 'weight': 0.6},
-#        {'lon': 75.229870, 'lat': 12.238140, 'weight': 0.9},
-#        {'lon': 75.235870, 'lat': 12.241140, 'weight': 0.7}
-#         ]
-#     return render_template('heatmap.html', data_points=data_points)
+
+@task.route('/map/heat/date')
+def heat_by_date():
+    date = request.args.get('date')
+    
+    if not date:
+        return jsonify({"error": "Date parameter is required"}), 400
+    
+    date_parts = date.split('/')
+    sql_date_format = f"{date_parts[2]}-{date_parts[1]}-{date_parts[0]}"
+    
+    cmd.execute("""
+    SELECT 
+    r1.lat, 
+    r1.lon, 
+    r1.date, 
+    AVG(r1.temp) AS avg_temp, 
+    AVG(r1.hum) AS avg_hum
+FROM readings r1 
+INNER JOIN (
+    SELECT lat, lon, date
+    FROM readings 
+    WHERE date = %s
+    GROUP BY lat, lon, date
+) r2 
+ON r1.lat = r2.lat AND r1.lon = r2.lon AND r1.date = r2.date
+GROUP BY r1.lat, r1.lon, r1.date
+    """, (sql_date_format,))
+
+    result = cmd.fetchall()
+    data_points = []
+    for row in result:
+        # Calc the effective temperature using heat index
+        temp_c = heat_index(row[3], row[4])
+        
+        # Create data point
+        data_point = {
+            'lat': row[0],
+            'lon': row[1],
+            'weight': min_max_normalize(temp_c, min=0, max=50)  # min-max normalized for 0-50 degrees
+        }
+        data_points.append(data_point)
+    
+    return jsonify({"data_points": data_points})
 
 @task.route('/map/heat')
 def chartheat():
-    cmd.execute("SELECT * FROM readings WHERE id = (SELECT MAX(id) FROM readings)")
+    cmd.execute("SELECT r1.lat, r1.lon, r1.temp, r1.hum FROM readings r1 INNER JOIN (SELECT lat, lon, MAX(DATE) AS max_date, MAX(TIME) AS max_time FROM readings GROUP BY lat, lon) r2 ON r1.lat = r2.lat AND r1.lon = r2.lon AND r1.date = r2.max_date AND r1.time = r2.max_time;")
     result=cmd.fetchall()
     print(result)
     # Prepare data_points in the required format
     data_points = []
-    aqi_value = None
     for row in result:
         #calculate the effective temerature using heat index
-        temp_c = heat_index(row[1],row[2])
-        aqi_value = predict_aqi(row[1], row[2], row[3], row[4])  # Assuming AQI value is stored in column 3
-        weight = min_max_normalize(temp_c, min=0, max=50)
+        temp_c = heat_index(row[2],row[3])
         # Assuming the database has latitude in row[1], longitude in row[2], and weight in row[4]
         data_point = {
-            'lat': 12.2429,  # Replace with the correct column index for latitude
-            'lon': 75.2346,  # Replace with the correct column index for longitude
-            'weight': weight,#min max normalised for 0-50 degrees
-            'aqi': aqi_value
+            'lat': row[0],  # Replace with the correct column index for latitude
+            'lon': row[1],  # Replace with the correct column index for longitude
+            'weight': min_max_normalize(temp_c,min=0, max=50)  #min max normalised for 0-50 degrees
         }
         data_points.append(data_point)
         print(data_points)
-    if temp_c <= 20:
-        heat_status="Good"
-    elif 21 <= temp_c <= 35:
-        heat_status="Moderate"
-    else:
-        heat_status="Bad"
-
-    # Categorize AQI values
-    if aqi_value <= 50:
-        aqi_status = "Good"
-    elif 51 <= aqi_value <= 100:
-        aqi_status = "Moderate"
-    else:
-        aqi_status = "Bad"
-
-    return render_template('heatmap.html', data_points=data_points ,map="Effective Heat", heat_status=heat_status , aqi_status=aqi_status)
+    return render_template('heatmap.html', data_points=data_points ,map="Effective Heat")
 
 @task.route('/map/noise')
 def chartnoise():
-    # cmd.execute("SELECT * FROM readings WHERE id = (SELECT MAX(id) FROM readings)")
-    # result=cmd.fetchall()
-    # print(result)
+    cmd.execute("""
+    SELECT r1.lat, r1.lon, r1.noise 
+    FROM readings r1 
+    INNER JOIN (
+        SELECT lat, lon, MAX(DATE) AS max_date, MAX(TIME) AS max_time 
+        FROM readings 
+        GROUP BY lat, lon
+    ) r2 
+    ON r1.lat = r2.lat 
+    AND r1.lon = r2.lon 
+    AND r1.date = r2.max_date 
+    AND r1.time = r2.max_time
+    ORDER BY r1.lat, r1.lon
+""")
+    result=cmd.fetchall()
     # # Prepare data_points in the required format
-    # data_points = []
-    # for row in result:
-    #     # Assuming the database has latitude in row[1], longitude in row[2], and weight in row[4]
-    #     data_point = {
-    #         'lat': 12.2429,  # Replace with the correct column index for latitude
-    #         'lon': 75.2346,  # Replace with the correct column index for longitude
-    #         'weight': row[1]/40  # Replace with the correct column index for weight
-    #     }
-    #     data_points.append(data_point)
-    #     print(data_points)
-    # # Pass data_points to the template
-    return render_template('heatmap.html', data_points=None,map="Noise Pollution",)
+    data_points = []
+    for row in result:
+        # Assuming the database has latitude in row[1], longitude in row[2], and weight in row[4]
+        data_point = {
+            'lat': row[0],  # Replace with the correct column index for latitude
+            'lon': row[1],  # Replace with the correct column index for longitude
+            'weight': min_max_normalize(row[2],min=0, max=100)  # Replace with the correct column index for weight
+        }
+        data_points.append(data_point)
+    # Pass data_points to the template
+    print(data_points)
+    return render_template('heatmap.html', data_points=data_points,map="Noise Pollution",)
 
 @task.route('/map/air')
 def chartair():
-    # cmd.execute("SELECT * FROM readings WHERE id = (SELECT MAX(id) FROM readings)")
-    # result=cmd.fetchall()
-    # print(result)
-    # # Prepare data_points in the required format
-    # data_points = []
-    # for row in result:
-    #     # Assuming the database has latitude in row[1], longitude in row[2], and weight in row[4]
-    #     data_point = {
-    #         'lat': 12.2429,  # Replace with the correct column index for latitude
-    #         'lon': 75.2346,  # Replace with the correct column index for longitude
-    #         'weight': row[1]/40  # Replace with the correct column index for weight
-    #     }
-    #     data_points.append(data_point)
-    #     print(data_points)
-    # # Pass data_points to the template
-    return render_template('heatmap.html', data_points=None,map="Air Pollution")
+    cmd.execute("""
+    SELECT r1.lat, r1.lon, r1.gas 
+    FROM readings r1 
+    INNER JOIN (
+        SELECT lat, lon, MAX(DATE) AS max_date, MAX(TIME) AS max_time 
+        FROM readings 
+        GROUP BY lat, lon
+    ) r2 
+    ON r1.lat = r2.lat 
+    AND r1.lon = r2.lon 
+    AND r1.date = r2.max_date 
+    AND r1.time = r2.max_time
+    ORDER BY r1.lat, r1.lon
+""")
+    result=cmd.fetchall()
+    print(result)
+    # Prepare data_points in the required format
+    data_points = []
+    for row in result:
+        # Assuming the database has latitude in row[1], longitude in row[2], and weight in row[4]
+        data_point = {
+            'lat': row[0],  # Replace with the correct column index for latitude
+            'lon': row[1],  # Replace with the correct column index for longitude
+            'weight': min_max_normalize(row[2],min=300, max=2000)  # weight of data point
+        }
+        data_points.append(data_point)
+        print(data_points)
+    # Pass data_points to the template
+    return render_template('heatmap.html', data_points=data_points,map="Air Pollution")
 
-
-# ----------------------------- Heatmap Routes -----------------------------
+# ----------------------------------------- Heatmap Prediction Routes --------------------------------------------
 
 # Default AQI Heatmap
-@task.route('/map/heatmap', methods=['GET'])
-def aqi_heatmap():
-    data_points = fetch_aqi_readings()
-    return render_template('heatmap.html', data_points=data_points, map="Air Quality Index (AQI)")
+@task.route('/map/aqipredict', methods=['GET'])
+def aqi_heatmapday():
+    cmd.execute("SELECT * FROM readings r1 INNER JOIN (SELECT lat, lon, MAX(DATE) AS max_date, MAX(TIME) AS max_time FROM "
+    "readings GROUP BY lat, lon) r2 ON r1.lat = r2.lat AND r1.lon = r2.lon AND r1.date = r2.max_date AND r1.time = r2.max_time;")
+    results = cmd.fetchall()
 
+    aqi_data = []
+    for row in results:
+        temp = row[1]  # Temperature column
+        hum = row[2]   # Humidity column
+        gas = row[3]   # Gas level column
+        noise = row[4] # Noise level column
+        lat = row[7]   # Latitude
+        lon = row[8]   # Longitude
 
-# API to fetch AQI data dynamically
-@task.route('/map/heat', methods=['GET'])
-def get_aqi_heatmap():
-    data_points = fetch_aqi_readings()
-    return jsonify({"data_points": data_points})
+        # Predict AQI using the trained model
+        aqi_value = predict_aqi(temp, hum, gas, noise)
 
+        # Normalize AQI for heatmap visualization
+        weight = min_max_normalize(aqi_value, min=50, max=200)
 
-# -------------------------------- Location Handling --------------------------------
-@task.route('/location', methods=['POST'])
-def handle_location_post():
-    data = request.get_json()
-    latitude = data['latitude']
-    longitude = data['longitude']
-    print("Received latitude: %s" % latitude)
-    print("Received longitude: %s" % longitude)
+        aqi_data.append({
+            "lat": lat,
+            "lon": lon,
+            "weight": weight  # Include AQI value for coloring
+        })
+    return render_template('heatmap.html', data_points=aqi_data, map="Predicted Air Quality Index")
 
-    url = f"https://geocode.maps.co/reverse?lat={latitude}&lon={longitude}"
-
-    try:
-        response = requests.get(url)
-        response.raise_for_status()
-        data = response.json()
-
-        if "display_name" in data:
-            location_name = data["display_name"]
-            session["location"] = location_name
-            return jsonify({'message': 'Location received successfully', 'location': location_name})
-        else:
-            return jsonify({'error': 'Could not fetch location data'}), 500
-
-    except requests.RequestException as e:
-        print(f"Error fetching location: {e}")
-        return jsonify({'error': 'Failed to connect to the location service'}), 500
+@task.route('/map/aqipredictweek', methods=['GET'])
+def aqi_heatmapweek():
+    # Optimized query to get the most recent reading for each unique location
+    cmd.execute("""
+    SELECT 
+            ROUND(AVG(temp), 2) AS avg_temperature,
+            ROUND(AVG(hum), 2) AS avg_humidity,
+            ROUND(AVG(gas), 2) AS avg_gas,
+            ROUND(AVG(noise), 2) AS avg_noise
+        FROM readings
+        WHERE date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+    """)
+    
+    results = cmd.fetchall()
+    
+    aqi_data = []
+    for row in results:
+        temp = row[0]      # Temperature 
+        hum = row[1]       # Humidity
+        gas = row[2]       # Gas level
+        noise = row[3]     # Noise level
+        lat = row[4]       # Latitude
+        lon = row[5]       # Longitude
+        
+        # Predict AQI using the trained model
+        aqi_value = predict_aqi(temp, hum, gas, noise)
+        
+        # Normalize AQI for heatmap visualization
+        weight = min_max_normalize(aqi_value, min=50, max=200)
+        
+        aqi_data.append({
+            "lat": lat,
+            "lon": lon,
+            "weight": weight  # Include AQI value for coloring
+        })
+    
+    return render_template('heatmap.html', data_points=aqi_data, map="Predicted Air Quality Index")
 
 # -------------------------------------------------- Admin -----------------------------------------------------
 @task.route("/admin-settings")
 def admin_settings():
     return render_template("adminsettings.html")
 
-#----------------USer management-------------------
+#--------------------------------------------------User management-----------------------------------------------
 @task.route("/usermanagement")
 def usermanagement():
     cmd.execute("SELECT * FROM logintable")
@@ -474,6 +642,5 @@ def delete_sensor(sid):
     except Exception as e:
         return redirect(url_for("sensor_management", message="Error deleting sensor: " + str(e)))
     
-
 
 task.run(debug=True)

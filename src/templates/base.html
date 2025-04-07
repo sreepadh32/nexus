@@ -19,18 +19,20 @@
         <a href="/map/heat" class="menu-item"><i class="fas fa-temperature-half"></i> Effective Temperature</a>
         <a href="/map/noise" class="menu-item"><i class="fas fa-volume-up"></i> Noise Pollution</a>
         <a href="/map/air" class="menu-item"><i class="fas fa-wind"></i> Air Pollution</a>
+        <a href="/map/aqipredict" class="menu-item"><i class="fa fa-line-chart"></i>AQI Prediction</a>
         <h3>Account Pages</h3>
         <a href="#" class="menu-item" id="settingsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" ><i class="fas fa-cog"></i> Settings</a>
         <!-- Settings dropdown menu -->
 
-    <div class="dropdown-menu " aria-labelledby="settingsDropdown">
-      <a class="dropdown-item menu-item" href="/change-username">Change Username</a>
-      <a class="dropdown-item menu-item" href="/change-password">Change Password</a>
-    </div>
-      {% if session.usertype=="admin" %}
-      <a href="/admin-settings" class="menu-item"><i class="fas fa-cog"></i> Admin Settings</a>
-      {% endif %}
+        <div class="dropdown-menu " aria-labelledby="settingsDropdown">
+          <a class="dropdown-item menu-item" href="/change-username">Change Username</a>
+          <a class="dropdown-item menu-item" href="/change-password">Change Password</a>
+        </div>
+        {% if session.usertype=="admin" %}
+        <a href="/admin-settings" class="menu-item"><i class="fas fa-cog"></i> Admin Settings</a>
+        {% endif %}
         <a href="/logout" class="menu-item"><i class="fas fa-sign-out-alt"></i> Log Out</a>
+        <a href="/notifications" class="menu-item"><i class="fas fa-bell"></i> Notification Log</a>
       </nav>
       <div class="sidebar-footer">
         <a href="#">Need Support? <br> Reach to our team</a>
@@ -42,13 +44,11 @@
     <!-- Main Content -->
     <main class="main-content">
       <header class="header" style="position: absolute; z-index: 10;">
-        <!-- buttion to fetch location data -->
-        <!-- <button id="get-location">Get Location</button> -->
         <div class="location headerbox glass"><i class="fa fa-map-marker" aria-hidden="true"></i>
           Cheemeni</div>
-        <div class="status headerbox glass">Air Quality: <span class="Good">Good</span></div>
-        <div class="status headerbox glass">Noise Quality: <span class="Bad">Bad</span></div>
-        <div class="status headerbox glass">Effective Temperature: <span class="{{heat_status}}">{{heat_status}}</span></div>
+        <div class="status headerbox glass">Air Quality: <span class="{{ session['air_status'] }}">{{ session['air_status'] }}</span></div>
+        <div class="status headerbox glass">Noise Quality: <span class="{{ session['noise_status'] }}">{{ session['noise_status'] }}</span></div>
+        <div class="status headerbox glass">Effective Temperature: <span class="{{ session['heat_status'] }}">{{ session['heat_status'] }}</span></div>
       </header>
       {% block mainsection %}{% endblock %}
     </main>

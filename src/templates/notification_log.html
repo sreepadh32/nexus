@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block head %}
+<title>Notification Log</title>
+<style>
+  
+</style>
+{% endblock %}
+
+{% block mainsection %}
+<section class="notification-log" style="margin-top: 100px; padding: 20px; text-align: center; color: white;">
+  <style>
+    body {
+      background-color: rgba(0, 0, 0, 0.8);
+    }
+    table {
+      background-color: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(10px);
+      border-radius: 10px;
+      width: 100%;
+      margin: auto;
+      margin-top: 50px;
+      color: rgb(0, 0, 0);
+    }
+    th, td {
+      padding: 10px;
+      text-align: center;
+    }
+  </style>
+
+  <h2 style="font-size: 36px;">Notification Log</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Message</th>
+        <th>Timestamp</th>
+        <th>Device ID</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for notification in notifications %}
+      <tr>
+        <td>{{ notification[0] }}</td>
+        <td>{{ notification[1] }}</td>
+        <td>{{ notification[2] }}</td>
+        <td>{{ notification[3] }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}
+
+{% block script %}
+<script>
+// Additional JavaScript can be added here if needed
+</script>
+{% endblock %}
