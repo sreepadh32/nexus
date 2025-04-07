@@ -281,7 +281,7 @@ def get_trend_data():
     # Calculate date for 7 days ago
     current_date = datetime.datetime.now().date()
     seven_days_ago = current_date - datetime.timedelta(days=7)
-    print("Date for 7 days ago:", seven_days_ago)
+    
     
     try:
         # Query to get aggregated data for the past 7 days
@@ -334,6 +334,53 @@ def get_trend_data():
     except Exception as e:
         print(f"Error fetching trend data: {e}")
         return jsonify({'error': str(e)}), 500
+    
+@task.route('/get_pollution_data')
+def get_pollution_data():
+    lon = session.get("lon")
+    lat = session.get("lat")
+    coord_margin = 0.01
+
+    # Create a list of all month names in order
+    all_months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    aqi_by_month = {month: 0 for month in all_months}  # Default AQI as 0
+
+    try:
+        # Query to get average AQI per month
+        cmd.execute("""
+            SELECT 
+                MONTH(date) AS month_num,
+                AVG(aqi) AS avg_aqi
+            FROM readings
+            WHERE 
+                lon BETWEEN %s - %s AND %s + %s
+                AND lat BETWEEN %s - %s AND %s + %s
+            GROUP BY MONTH(date)
+            ORDER BY MONTH(date)
+        """, (lon, coord_margin, lon, coord_margin, lat, coord_margin, lat, coord_margin))
+
+        results = cmd.fetchall()
+
+        # Fill the AQI data into the dictionary
+        for row in results:
+            month_index = row[0] - 1  # Convert 1-based SQL month to 0-based Python index
+            avg_aqi = float(row[1]) if row[1] is not None else 0
+            aqi_by_month[all_months[month_index]] = avg_aqi
+
+        # Convert dict to lists for JSON
+        months = list(aqi_by_month.keys())
+        aqi_values = list(aqi_by_month.values())
+
+        return jsonify({
+            'months': months,
+            'aqi': aqi_values
+        })
+
+    except Exception as e:
+        print(f"Error fetching pollution data: {e}")
+        return jsonify({'error': str(e)}), 500
+
 
 
 @task.route("/change-password", methods=["POST", "GET"])
