@@ -17,6 +17,17 @@
   background-color: transparent;
   outline: none;
 }
+
+.ol-popup {
+  position: absolute;
+  background-color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  pointer-events: none;
+}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
 {% endblock %}
@@ -49,7 +60,7 @@
     });
 
     // Dummy data points for heat map (latitude, longitude, and weight)
-        const data_points = {{ data_points | tojson }};
+    const data_points = {{ data_points | tojson }};
 
     // Convert data points to OpenLayers features
     const features = data_points.map((point) => {
@@ -72,6 +83,16 @@
       weight: (feature) => feature.get('weight'), // Use the weight property for intensity
     });
 
+    // Create popup overlay
+    const popup = new ol.Overlay({
+      element: document.createElement('div'),
+      positioning: 'bottom-center',
+      stopEvent: false,
+      offset: [0, -15]
+    });
+    popup.getElement().className = 'ol-popup';
+    popup.getElement().style.display = 'none';
+
     // Create map with base layer and heatmap
     const map = new ol.Map({
       target: 'map',
@@ -80,6 +101,52 @@
         center: ol.proj.fromLonLat([75.231870, 12.240140]),
         zoom: 16, // Set the zoom level
       }),
+      overlays: [popup]
+    });
+
+    // Add hover interaction
+    map.on('pointermove', function(evt) {
+      const feature = map.forEachFeatureAtPixel(evt.pixel, function(feature) {
+        return feature;
+      });
+      
+      if (feature) {
+        const weight = feature.get('weight');
+        let displayValue, unit;
+        
+        // Determine map type and calculate actual value
+        switch("{{ map }}") {
+            case "Effective Heat":
+                // Heat map: weight = normalized temp (0-50°C)
+                displayValue = Math.round(weight * 50);
+                unit = "°C";
+                break;
+            case "Noise Pollution":
+                // Noise map: weight = normalized noise (0-100 dB)
+                displayValue = Math.round(weight * 100);
+                unit = "dB";
+                break;
+            case "Air Pollution":
+                // Air map: weight = normalized gas (300-2000 ppm)
+                displayValue = Math.round(weight * (2000 - 300));
+                unit = "ppm";
+                break;
+            case "Predicted Air Quality Index":
+                // AQI map: weight = normalized AQI (0-300)
+                displayValue = Math.round(weight * 300);
+                unit = "AQI";
+                break;
+            default:
+                displayValue = weight.toFixed(2);
+                unit = "";
+        }
+        
+        popup.getElement().innerHTML = `${displayValue} ${unit}`;
+        popup.setPosition(evt.coordinate);
+        popup.getElement().style.display = 'block';
+      } else {
+        popup.getElement().style.display = 'none';
+      }
     });
 
     setInterval(function() {
@@ -161,32 +228,32 @@
     // Update prediction label on slider input
     function updatePredictionLabel() {
       if (slider.value == 0) {
-    dateLabel.textContent = 'Tomorrow';
-    fetch('/map/aqipredict?format=json')
-        .then(response => response.json())
-        .then(data => {
-            console.log('Success:', data);
-            if (data.data_points) {
-                updateHeatmapData(data.data_points);
-            }
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-} else {
-    dateLabel.textContent = 'Next Week';
-    fetch('/map/aqipredictweek?format=json')
-        .then(response => response.json())
-        .then(data => {
-            console.log('Success:', data);
-            if (data.data_points) {
-                updateHeatmapData(data.data_points);
-            }
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-}
+        dateLabel.textContent = 'Tomorrow';
+        fetch('/map/aqipredict?format=json')
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+                if (data.data_points) {
+                    updateHeatmapData(data.data_points);
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+      } else {
+        dateLabel.textContent = 'Next Week';
+        fetch('/map/aqipredictweek?format=json')
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+                if (data.data_points) {
+                    updateHeatmapData(data.data_points);
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+      }
     }
 
     // Initialize prediction label

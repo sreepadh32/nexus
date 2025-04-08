@@ -101,7 +101,7 @@ function updateTrendChart(parameter) {
             color = 'rgba(75, 192, 75, 0.2)';
             borderColor = 'rgba(75, 192, 75, 0.9)';
             label = 'Gas';
-            yAxisMin = 100;
+            yAxisMin = 0;
             yAxisMax = 2000;
             break;
         case 'noise':
@@ -176,8 +176,8 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .catch(error => console.error('Error fetching trend data:', error));
     
-        // Fetch pollution data (RIGHT chart)
-        fetch('/get_pollution_data')
+    // Initialize pollution chart (unchanged)
+    fetch('/get_pollution_data')
         .then(response => response.json())
         .then(data => {
             new Chart(ctx2, {

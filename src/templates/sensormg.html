@@ -1,7 +1,8 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>User Management</title>
+    <title>Sensor Management</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
@@ -86,21 +87,57 @@
 <body>
     <h1>Sensor Management</h1>
 
-    <form action="/add_sensor" method="POST" class="form-container">
+    <!-- --------------sensor table ------------------>
+
+    <div class="glassmorphism-container" style="margin: 0 0 75px;">
+        <h3> Delete Sensor</h3
+            >
+        <table style="width: 800px;" border="2px" >
+            <tr>
+              <th>Sl No</th>
+              <th>Name</th>
+              <th>Location</th>
+              <th>status</th>
+              <th>Last seen</th>
+              <th>Last data</th>
+              <th>Delete</th>
+            </tr>
+            {% set slno = namespace(value=1) %}
+            {% for sensor in sensors%}
+            <tr>
+              <td>sensor {{ slno.value }}</td>
+              <td>{{ sensor[1] }}</td>
+              <td>{{ sensor[2] }}</td>
+              <td>{{ sensor[3] }}</td>
+              <td>{{ sensor[4] }}</td>
+              <td>{{ sensor[5] }}</td>
+              <td><a style="color: red;" href="/delete_sensor/{{ sensor[0] }}">Delete Sensor</a></td>
+            </tr>
+            {% set slno.value = slno.value + 1 %}
+            {% endfor %}
+        </table>
+    </div>
+
+    <form action="/addSensor" method="POST" class="form-container">
         <div class="section-header">Add Sensor</div>
-        <input type="text" name="add_sensor" id="ip1" placeholder="Enter sensor id" required />
+        <input type="text" name="name" id="ip1" placeholder="Enter Name" required />
+        <input type="text" name="location" id="ip2" placeholder="Enter Location" required />
+        <label for="ip4">Status:</label>
+        <select name="status" id="ip4" required>
+            <option value="" disabled selected>Select Status</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+        </select>
+        
         <button type="submit">Add Sensor</button>
     </form>
 
-    <form action="/delete_sensor" method="POST" class="form-container">
-        <div class="section-header">Delete Sensor</div>
-        <input type="text" name="userid" id="ip4" placeholder="Enter sensor id" required />
-        <button type="submit">Delete User</button>
-    </form>
 </body>
+
+{% if request.args.get("message") %}
 <script>
-    {% if request.args.get("message") %}
-  alert("{{ request.args.get("message") }}");
-{% endif %}
+     alert('{{ request.args.get("message") }}');
 </script>
+{% endif %}
+
 </html>

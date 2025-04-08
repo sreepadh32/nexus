@@ -281,7 +281,7 @@ def get_trend_data():
     # Calculate date for 7 days ago
     current_date = datetime.datetime.now().date()
     seven_days_ago = current_date - datetime.timedelta(days=7)
-    
+    print("Date for 7 days ago:", seven_days_ago)
     
     try:
         # Query to get aggregated data for the past 7 days
@@ -316,7 +316,7 @@ def get_trend_data():
         for row in results:
             # Format date as day name (Mon, Tue, etc.)
             date_obj = row[0]
-            day_name = date_obj.strftime('%a')
+            day_name = date_obj.strftime('%a %d')
             dates.append(day_name)
             temps.append(float(row[1]))
             hums.append(float(row[2]))
@@ -334,53 +334,60 @@ def get_trend_data():
     except Exception as e:
         print(f"Error fetching trend data: {e}")
         return jsonify({'error': str(e)}), 500
-    
+
 @task.route('/get_pollution_data')
 def get_pollution_data():
     lon = session.get("lon")
     lat = session.get("lat")
-    coord_margin = 0.01
+    coord_margin = 0.005
 
-    # Create a list of all month names in order
     all_months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-    aqi_by_month = {month: 0 for month in all_months}  # Default AQI as 0
+    aqi_by_month = {month: 0 for month in all_months}
 
     try:
+        # Pre-calculate bounds for clarity and correctness
+        lon_min = lon - coord_margin
+        lon_max = lon + coord_margin
+        lat_min = lat - coord_margin
+        lat_max = lat + coord_margin
+
+        con2 =pymysql.connect(host="localhost", user="root", password="root", port=3307, db="smartcitydb",charset='utf8')
+        cmd2 = con2.cursor()
+
         # Query to get average AQI per month
-        cmd.execute("""
+        cmd2.execute("""
             SELECT 
                 MONTH(date) AS month_num,
                 AVG(aqi) AS avg_aqi
             FROM readings
             WHERE 
-                lon BETWEEN %s - %s AND %s + %s
-                AND lat BETWEEN %s - %s AND %s + %s
+                lon BETWEEN %s AND %s
+                AND lat BETWEEN %s AND %s
             GROUP BY MONTH(date)
             ORDER BY MONTH(date)
-        """, (lon, coord_margin, lon, coord_margin, lat, coord_margin, lat, coord_margin))
+        """, (lon_min, lon_max, lat_min, lat_max))
 
-        results = cmd.fetchall()
+        results = cmd2.fetchall()
 
-        # Fill the AQI data into the dictionary
+        cmd2.close()
+        con2.close()
+
         for row in results:
-            month_index = row[0] - 1  # Convert 1-based SQL month to 0-based Python index
-            avg_aqi = float(row[1]) if row[1] is not None else 0
-            aqi_by_month[all_months[month_index]] = avg_aqi
-
-        # Convert dict to lists for JSON
-        months = list(aqi_by_month.keys())
-        aqi_values = list(aqi_by_month.values())
+            month_num, avg_aqi = row
+            # Ensure month index is within valid range
+            if 1 <= month_num <= 12:
+                month_name = all_months[month_num - 1]
+                aqi_by_month[month_name] = round(avg_aqi or 0, 2)
 
         return jsonify({
-            'months': months,
-            'aqi': aqi_values
+            'months': list(aqi_by_month.keys()),
+            'aqi': list(aqi_by_month.values())
         })
 
     except Exception as e:
         print(f"Error fetching pollution data: {e}")
         return jsonify({'error': str(e)}), 500
-
 
 
 @task.route("/change-password", methods=["POST", "GET"])
@@ -595,6 +602,7 @@ def aqi_heatmapday():
             "lat": lat,
             "lon": lon,
             "weight": weight  # Include AQI value for coloring
+
         })
     
     # Check if requesting JSON format (based on Accept header or json parameter)
@@ -685,20 +693,82 @@ def delete_user(uid):
         return redirect(url_for("usermanagement", message="Error deleting user: " + str(e)))
     
 # ---------- Sensor Management ------------
+# ---------- Sensor Management ------------
 @task.route("/sensormanagement")
-def sensor_management():
-    cmd.execute("SELECT * FROM readings")
+def sensormanagement():
+    cmd.execute("SELECT * FROM devices")
     sensors = cmd.fetchall()
     return render_template("sensormg.html", sensors=sensors)
+
+@task.route("/addSensor", methods=["POST"])
+def add_sensor():
+    name = request.form["name"]
+    location = request.form["location"]
+    status = request.form["status"]
+    last_seen = datetime.datetime.now()
+    # Insert the sensor into the database
+    cmd.execute("INSERT INTO devices (name, location, status, last_seen, last_data) VALUES (%s, %s, %s, %s, %s)", (name, location, status, last_seen, "0"))
+    con.commit()
+    return redirect(url_for("sensormanagement", message="Sensor added successfully!"))
+
 
 @task.route("/delete_sensor/<sid>", methods=["GET"])
 def delete_sensor(sid):
     try:
-        cmd.execute("DELETE FROM sensor_table WHERE id= %s;", (sid))
+        cmd.execute("DELETE FROM devices WHERE d_id= %s;", (sid))
         con.commit()
-        return redirect(url_for("sensor_management", message="Sensor deleted successfully!"))
+        return redirect(url_for("sensormanagement", message="Sensor deleted successfully!"))
     except Exception as e:
-        return redirect(url_for("sensor_management", message="Error deleting sensor: " + str(e)))
-    
+        return redirect(url_for("sensormanagement", message="Error deleting sensor: " + str(e)))
+
+
+#notification
+
+@task.route("/notificationmg")
+def notificationmangmnt():
+    cmd.execute("SELECT * FROM notification ORDER BY timestamp DESC;")
+    notifications = cmd.fetchall()
+
+    print("Fetched notifications:", notifications)  # Debugging line to check fetched notifications
+    return render_template('notifmg.html', notifications=notifications)
+
+#need to edit
+@task.route("/notification/add", methods=["POST"])
+def add_notification():
+    try:
+        notification_text = request.form["Notification_msg"]
+        d_id = request.form.get("d_id", 1)  # Default to 1 if device ID not provided
+        
+        cmd.execute("INSERT INTO notification (Notification, d_id) VALUES (%s, %s)", 
+                   (notification_text, d_id))
+        con.commit()
+        return redirect(url_for("notificationmangmnt", message="Notification added successfully!"))
+    except Exception as e:
+        return redirect(url_for("notificationmangmnt", message=f"Error adding notification: {str(e)}"))
+
+
+@task.route("/notification/modify/<nid>", methods=["POST"])
+def modify_notification(nid):
+    try:
+        new_text = request.form["new_text"]
+        cmd.execute("UPDATE notification SET Notification=%s WHERE N_id=%s", 
+                   (new_text, nid))
+        con.commit()
+        return redirect(url_for("notificationmangmnt", message="Notification updated successfully!"))
+    except Exception as e:
+        return redirect(url_for("notificationmangmnt", message=f"Error updating notification: {str(e)}"))
+
+
+@task.route("/notification/delete/<nid>", methods=["GET"])
+def delete_notification(nid):
+    try:
+        cmd.execute("DELETE FROM notification WHERE N_id=%s", (nid))
+        con.commit()
+        return redirect(url_for("notificationmangmnt", message="Notification deleted successfully!"))
+    except Exception as e:
+        return redirect(url_for("notificationmangmnt", message=f"Error deleting notification: {str(e)}"))
+
+
+
 
 task.run(debug=True)

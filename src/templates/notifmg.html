@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Alert Management</title>
+    <title>Notification Management</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        /* General Styles */
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -25,7 +24,6 @@
             font-size: 2.5em;
         }
 
-        /* Form Container */
         .form-container {
             width: 90%;
             max-width: 400px;
@@ -36,8 +34,8 @@
             margin-bottom: 20px;
         }
 
-        /* Input Styles */
-        .form-container input, .form-container textarea, .form-container select {
+        .form-container input,
+        .form-container select {
             width: 100%;
             padding: 10px;
             margin: 10px 0;
@@ -47,15 +45,13 @@
             box-sizing: border-box;
         }
 
-        .form-container input:focus, 
-        .form-container textarea:focus, 
-        .form-container select:focus {
+        .form-container input:focus {
             outline: none;
             border-color: #4CAF50;
             box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
         }
 
-         .form-container button {
+        .form-container button {
             width: 100%;
             font-size: 1.2em;
             padding: 10px;
@@ -74,35 +70,103 @@
             transform: translateY(-2px);
         }
 
-         .form-container button:active {
+        .form-container button:active {
             transform: translateY(0);
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
-        .hd {
+        .section-header {
             margin-top: 20px;
             font-size: 1.2em;
             font-weight: bold;
             color: #555;
         }
+
+        table {
+            width: 90%;
+            max-width: 1000px;
+            border-collapse: collapse;
+            background-color: #fff;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        table th, table td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+            text-align: center;
+        }
+
+        table th {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        table tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .action-link {
+            margin: 0 5px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .edit-link {
+            color: #2196F3;
+        }
+
+        .delete-link {
+            color: red;
+        }
     </style>
 </head>
 <body>
+
     <h1>Notification Management</h1>
-    <form action="/add_alert" method="POST" class="form-container">
-        <div class="hd">Send Notification</div>
-        /* Notification aykan */
-        <input type="text" name="Notification_title" placeholder="Enter Notification Title" required />
-        <textarea name="Notification_msg" placeholder="Enter Notification Message" rows="3" required></textarea>
-        <select name="user_type" required>
-            <option value="" disabled selected>Select Priority</option>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="all" selected>Everyone</option>
-        </select>
-        <button type="submit">Send Notification</button>
-    </form>
+
+    <!-- ---------- Notification Table ------------ -->
+    <div class="glassmorphism-container" style="margin: 0 0 50px;">
+        <h3 style="text-align:center;">Manage Notifications</h3>
+        <table>
+                <tr>
+                    <th>Sl No</th>
+                    <th>Device ID</th>
+                    <th>Message</th>
+                    <th>Timestamp</th>
+                    <th>Actions</th>
+                </tr>
+                {% set slno = namespace(value=1) %}
+                {% for note in notifications %}
+                <tr>
+                    <td>{{ slno.value }}</td>
+                    <td>{{ note[3] }}</td> <!-- d_id -->
+                    <td style="max-width: 400px; word-wrap: break-word;">{{ note[1] }}</td> <!-- Notification -->
+                    <td>{{ note[2] }}</td> <!-- Timestamp -->
+                    <td>
+                        <a class="action-link delete-link" href="/notification/delete/{{ note[0] }}">Delete</a>
+                    </td>
+                </tr>
+                {% set slno.value = slno.value + 1 %}
+                {% endfor %}
+            </table>
+        </div>
     
+        <!-- ---------- Add Notification Form ---------- -->
+        <form action="/notification/add" method="POST" class="form-container">
+            <div class="section-header">Add Notification</div>
+            <input type="text" name="Notification_msg" placeholder="Enter Notification Message" required />
+            <input type="number" name="d_id" placeholder="Enter Device ID" required />
+            <button type="submit">Add Notification</button>
+        </form>
+
+    {% if request.args.get("message") %}
+    <script>
+        alert('{{ request.args.get("message") }}');
+    </script>
+    {% endif %}
+
 </body>
 </html>
